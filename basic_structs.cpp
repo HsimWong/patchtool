@@ -22,21 +22,21 @@ struct LineChange {
 struct FileChange{
     string orig_dir;
     string final_dir;
-    list<LineChange *> linechanges;
+    list<LineChange> linechanges;
 };
 
 struct Patch {
     string commit_hash;
-    list<FileChange *> file_changes;
+    list<FileChange> file_changes;
 
 };
 
-int line_modified_above(LineChange * l, Patch * cmt) {
+int line_modified_above(LineChange l, Patch cmt) {
     int mod_num = 0;
-    FileChange * new_version_file;
+    FileChange new_version_file;
     /* Find out interfered files */
-    for (auto const & i : (cmt->file_changes)) {
-        if(i->final_dir == (l->file_dir)) {
+    for (auto const & i : (cmt.file_changes)) {
+        if(i.final_dir == (l.file_dir)) {
             new_version_file = i;
             break;
         } else {
@@ -44,13 +44,13 @@ int line_modified_above(LineChange * l, Patch * cmt) {
         }
     }
     /* Dealing with front-inserted 
-     * lines when interfered file is not empty. */
+     lines when interfered file is not empty. */
     int influenced_offset_num = 0;
     if (new_version_file != nullptr) {
-        for(auto const & i : (new_version_file->linechanges)) {
-            if ((i->inserted_line_num) <= (l->result_line_num)) {
+        for(auto const & i : (new_version_file.linechanges)) {
+            if ((i.inserted_line_num) <= (l.result_line_num)) {
                 influenced_offset_num += 
-                    (l->line_content.substr(0, 1).compare("+") == 0) ? 1 : -1;
+                    (l.line_content.substr(0, 1).compare("+") == 0) ? 1 : -1;
             } else {
                 continue;
             }
