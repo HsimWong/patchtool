@@ -1,0 +1,40 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/xwan/patch_working_dir/patchtool/Parser.cpp
+basic_structs.h
+/home/xwan/patch_working_dir/patchtool/basic_structs.h
+iostream
+-
+string
+-
+
+/home/xwan/patch_working_dir/patchtool/basic_structs.cpp
+string
+-
+list
+-
+algorithm
+-
+memory
+-
+stdexcept
+-
+array
+-
+unistd.h
+-
+bits/stdc++.h
+-
+
+/home/xwan/patch_working_dir/patchtool/basic_structs.h
+string
+-
+basic_structs.cpp
+/home/xwan/patch_working_dir/patchtool/basic_structs.cpp
+
