@@ -59,13 +59,6 @@ int line_modified_above(LineChange l, Patch cmt) {
     return influenced_offset_num;
 }
 
-// string get_one_string(string &string) {
-
-// }
-
-// Patch new_patch(string git_diff_info) {
-
-// }
 
 string exec(const char* cmd) {
     array<char, 128> buffer;
