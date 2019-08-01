@@ -7,12 +7,16 @@
 #IncludeRegexTransform: 
 
 /home/xwan/patch_working_dir/patchtool/Parser.cpp
-basic_structs.h
-/home/xwan/patch_working_dir/patchtool/basic_structs.h
-iostream
--
+Parser.h
+/home/xwan/patch_working_dir/patchtool/Parser.h
 string
 -
+
+/home/xwan/patch_working_dir/patchtool/Parser.h
+string
+-
+basic_structs.h
+/home/xwan/patch_working_dir/patchtool/basic_structs.h
 
 /home/xwan/patch_working_dir/patchtool/basic_structs.cpp
 string

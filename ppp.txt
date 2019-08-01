@@ -1,15 +1,13 @@
-//
-// Created by xwan on 7/31/19.
-//
-
+#include "basic_structs.h"
 #include "Parser.h"
+#include <iostream>
 #include <string>
-#define INFTY 65535
+#define INFTY = 65535
+#define ELMIMINATED = -1
 using namespace std;
 
-
 /* Improvement that can be made:
- * 1. Look-back methods are used in Parser. This can be
+ * 1. Look-back methods are used in Parserr. This can be
  * changed to look-forward method
  * 2. Nothing is done until a line of statement is made.
  * This can be improved by directly locate the Enter
@@ -19,10 +17,10 @@ using namespace std;
 const int identifier_size = 11;
 
 string identifiers[identifier_size] = {
-        "+", "-", "diff --git",
-        "+++", "---", "new file mode",
-        " ", "@@", "Binary files",
-        "\\No newline at the end of file", "index"
+    "+", "-", "diff --git",
+    "+++", "---", "new file mode",
+    " ", "@@", "Binary files",
+    "\\No newline at the end of file", "index"
 };
 
 
@@ -61,33 +59,33 @@ void Parser::Parse_patch_git_info(string str) {
         } else {
             switch (ptr)
             {
-                case 0:
-                    op_buffer[op_buf_size] = str[i];
-                    op_buffer[++op_buf_size] = '\0';
-                    if (hit_identifier(op_buffer, ident_id)) {
-                        ptr = 1;
-                    }
-                    break;
-                case 1:
-                    st_buffer[st_buf_size] = str[i];
-                    st_buffer[++st_buf_size] = '\0';
-                    // if ((str[i] == '\n') || (str[i] == '\0')) {
-                    //     this->deal_with_one_line(ident_id, st_buffer);
-                    // }
-                default:
-                    break;
+            case 0:
+                op_buffer[op_buf_size] = str[i];
+                op_buffer[++op_buf_size] = '\0';
+                if (hit_identifier(op_buffer, ident_id)) {
+                    ptr = 1;
+                }
+                break;
+            case 1:
+                st_buffer[st_buf_size] = str[i];
+                st_buffer[++st_buf_size] = '\0';
+                // if ((str[i] == '\n') || (str[i] == '\0')) {
+                //     this->deal_with_one_line(ident_id, st_buffer);
+                // }
+            default:
+                break;
             }
         }
     }
 }
 
 void Parser::deal_with_one_line(int ident_id, char * st){
-    LineChange * l;
-    switch (ident_id) {
+    switch (ident_id){
+        LineChange * l;
         case 0:         // +
 
             (*l) = {this->cur_file->orig_dir, this->cur_file->final_dir,
-                    cur_ori_num, cur_fin_num, true, (string)st, this->commit_hash};
+                        cur_ori_num, cur_fin_num, true, (string)st, this->commit_hash};
             (*(patch.file_changes.end())).linechanges.push_back((*l);
             this->cur_fin_num += 1;
             break;
@@ -95,7 +93,7 @@ void Parser::deal_with_one_line(int ident_id, char * st){
         case 1:         // -
 
             (*l) = {this->cur_file->orig_dir, this->cur_file->final_dir,
-                    cur_ori_num, cur_fin_num, false, (string)st, this->commit_hash};
+                        cur_ori_num, cur_fin_num, false, (string)st, this->commit_hash};
             (*(patch.file_changes.end())).linechanges.push_back((*l);
             /* Cur_ori_line_num & cur_fin_lin_num stay originally */
             this->cur_ori_num += 1;
@@ -162,3 +160,35 @@ void Parser::parse_line_num(int & ori_num, int & fin_num, char * cha) {
     }
 }
 
+int main(int argc, char const *argv[]) {
+    string git_info = exec("git diff bf757b5 2d975eda ");
+    cout << git_info << endl;
+}
+
+
+----------------------------------------------------------------------------------
+#ifndef PARSER_H
+#define PARSER_H
+#include "Parser.cpp"
+#include "basic_structs.h"
+#include <string>
+using namespace std;
+
+class Parser {
+private:
+    Patch patch;
+    FileChange * cur_file;
+    int cur_ori_num;
+    int cur_fin_num;
+    string commit_hash;
+    void deal_with_one_line(int ident_id, char * st);
+    bool hit_identifier(char * op_buffer, int & ident_id);
+    void Parse_patch_git_info(string str);
+    void parse_line_num(int & ori_num, int & fin_num, char * cha);
+    void parse_line_num(int & ori_num, int fin_num, char * cha);
+public:
+    Parser(string commit_hash);
+    Parser(string commit_hash1, string commit_hash2);
+};
+
+#endif
