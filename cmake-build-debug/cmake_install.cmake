@@ -1,4 +1,4 @@
-# Install script for directory: /home/xwan/patch_working_dir/patchtool
+# Install script for directory: /home/xwan/Desktop/patchtool
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/xwan/patch_working_dir/patchtool/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/xwan/Desktop/patchtool/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

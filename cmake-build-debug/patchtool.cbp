@@ -8,33 +8,33 @@
 		<Option virtualFolders="CMake Files\;"/>
 		<Build>
 			<Target title="all">
-				<Option working_dir="/home/xwan/patch_working_dir/patchtool/cmake-build-debug"/>
+				<Option working_dir="/home/xwan/Desktop/patchtool/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
-					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="rebuild_cache">
-				<Option working_dir="/home/xwan/patch_working_dir/patchtool/cmake-build-debug"/>
+				<Option working_dir="/home/xwan/Desktop/patchtool/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
-					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="patchtool">
-				<Option output="/home/xwan/patch_working_dir/patchtool/cmake-build-debug/patchtool" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/xwan/patch_working_dir/patchtool/cmake-build-debug"/>
+				<Option output="/home/xwan/Desktop/patchtool/cmake-build-debug/patchtool" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/xwan/Desktop/patchtool/cmake-build-debug"/>
 				<Option object_output="./"/>
 				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
-					<Add directory="/home/xwan/patch_working_dir/patchtool/."/>
+					<Add directory="/home/xwan/Desktop/patchtool/."/>
 					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8"/>
 					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/x86_64-redhat-linux"/>
 					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/backward"/>
@@ -43,20 +43,20 @@
 					<Add directory="/usr/include"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 patchtool"/>
-					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 patchtool"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="patchtool/fast">
-				<Option output="/home/xwan/patch_working_dir/patchtool/cmake-build-debug/patchtool" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/xwan/patch_working_dir/patchtool/cmake-build-debug"/>
+				<Option output="/home/xwan/Desktop/patchtool/cmake-build-debug/patchtool" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/xwan/Desktop/patchtool/cmake-build-debug"/>
 				<Option object_output="./"/>
 				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
-					<Add directory="/home/xwan/patch_working_dir/patchtool/."/>
+					<Add directory="/home/xwan/Desktop/patchtool/."/>
 					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8"/>
 					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/x86_64-redhat-linux"/>
 					<Add directory="/usr/lib/gcc/x86_64-redhat-linux/8/../../../../include/c++/8/backward"/>
@@ -65,45 +65,45 @@
 					<Add directory="/usr/include"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 patchtool/fast"/>
-					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 patchtool/fast"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="edit_cache">
-				<Option working_dir="/home/xwan/patch_working_dir/patchtool/cmake-build-debug"/>
+				<Option working_dir="/home/xwan/Desktop/patchtool/cmake-build-debug"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
-					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/patch_working_dir/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j4 -f &quot;/home/xwan/Desktop/patchtool/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/home/xwan/patch_working_dir/patchtool/BugMod.cpp">
+		<Unit filename="/home/xwan/Desktop/patchtool/BugMod.cpp">
 			<Option target="patchtool"/>
 		</Unit>
-		<Unit filename="/home/xwan/patch_working_dir/patchtool/Commit.cpp">
+		<Unit filename="/home/xwan/Desktop/patchtool/Commit.cpp">
 			<Option target="patchtool"/>
 		</Unit>
-		<Unit filename="/home/xwan/patch_working_dir/patchtool/Parser.cpp">
+		<Unit filename="/home/xwan/Desktop/patchtool/Parser.cpp">
 			<Option target="patchtool"/>
 		</Unit>
-		<Unit filename="/home/xwan/patch_working_dir/patchtool/Parser.h">
+		<Unit filename="/home/xwan/Desktop/patchtool/Parser.h">
 			<Option target="patchtool"/>
 		</Unit>
-		<Unit filename="/home/xwan/patch_working_dir/patchtool/basic_structs.cpp">
+		<Unit filename="/home/xwan/Desktop/patchtool/basic_structs.cpp">
 			<Option target="patchtool"/>
 		</Unit>
-		<Unit filename="/home/xwan/patch_working_dir/patchtool/basic_structs.h">
+		<Unit filename="/home/xwan/Desktop/patchtool/basic_structs.h">
 			<Option target="patchtool"/>
 		</Unit>
-		<Unit filename="/home/xwan/patch_working_dir/patchtool/test.cpp">
+		<Unit filename="/home/xwan/Desktop/patchtool/test.cpp">
 			<Option target="patchtool"/>
 		</Unit>
-		<Unit filename="/home/xwan/patch_working_dir/patchtool/CMakeLists.txt">
+		<Unit filename="/home/xwan/Desktop/patchtool/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>
 		</Unit>
 	</Project>

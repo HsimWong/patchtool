@@ -11,25 +11,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-struct LineChange {
-    string file_dir;
-    int inserted_line_num;
-    int result_line_num;
-    string line_content;
-    string commit_hash;
-};
-
-struct FileChange{
-    string orig_dir;
-    string final_dir;
-    list<LineChange> linechanges;
-};
-
-struct Patch {
-    string commit_hash;
-    list<FileChange> file_changes;
-
-};
+//template <class T>
+//bool assign_struct (T assignee, )
 
 // int line_modified_above(LineChange l, Patch cmt) {
 //     int mod_num = 0;
@@ -61,7 +44,7 @@ struct Patch {
 // }
 
 
-string exec(const char* cmd) {
+string exec_cmd(const char* cmd) {
     array<char, 128> buffer;
     string result;
     unique_ptr<FILE, decltype(&pclose) > pipe(popen(cmd, "r"), pclose);

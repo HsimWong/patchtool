@@ -6,5 +6,5 @@ CXX_FLAGS = -g   -std=gnu++14
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/xwan/patch_working_dir/patchtool/. 
+CXX_INCLUDES = -I/home/xwan/Desktop/patchtool/. 
 

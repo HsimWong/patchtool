@@ -26,6 +26,7 @@ BugMod::~BugMod() {
 int main(int argc, char const *argv[]) {
     int a = 5;
     cout << "Hello, world" << endl;
+
     BugMod * bm = new BugMod("0f2bb18a0b", "4f4891263");
     return 0;
 }

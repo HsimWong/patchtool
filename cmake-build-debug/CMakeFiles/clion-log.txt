@@ -1,4 +1,4 @@
-/home/xwan/Downloads/CLion-2019.2/clion-2019.2/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/xwan/patch_working_dir/patchtool
+/home/xwan/Downloads/CLion-2019.2/clion-2019.2/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/xwan/Desktop/patchtool
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/xwan/patch_working_dir/patchtool/cmake-build-debug
+-- Build files have been written to: /home/xwan/Desktop/patchtool/cmake-build-debug

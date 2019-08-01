@@ -12,4 +12,4 @@ add_executable(patchtool
         Commit.cpp
         Parser.cpp
         Parser.h
-        test.cpp  Parser.cpp Parser.h)
+        test.cpp  Parser.cpp Parser.h )

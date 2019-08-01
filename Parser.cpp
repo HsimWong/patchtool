@@ -4,6 +4,8 @@
 
 #include "Parser.h"
 #include <string>
+#include <iostream>
+
 #define INFTY 65535
 using namespace std;
 
@@ -19,9 +21,9 @@ using namespace std;
 const int identifier_size = 11;
 
 string identifiers[identifier_size] = {
-        "+", "-", "diff --git",
-        "+++", "---", "new file mode",
-        " ", "@@", "Binary files",
+         "+++", "---","+", "-",
+        " ", "@@", "new file mode",
+         "Binary files","diff --git",
         "\\No newline at the end of file", "index"
 };
 
@@ -30,18 +32,21 @@ Parser::Parser(string commit_hash) {
     this -> cur_ori_num = 1;
     this -> cur_fin_num = 1;
     this -> commit_hash = commit_hash;
-    this->patch.commit_hash = commit_hash;
+    this-> patch = new Patch;
+    this->patch->commit_hash = commit_hash;
     string cmd = "git diff " + commit_hash;
-    this->Parse_patch_git_info(exec((cmd).c_str()));
+    string git_info = exec_cmd((cmd.c_str()));
+    this->Parse_patch_git_info(git_info);
 }
 
 Parser::Parser(string commit_hash1, string commit_hash2) {
     this -> cur_ori_num = 1;
     this -> cur_fin_num = 1;
+    this->patch = new Patch;
     this -> commit_hash = commit_hash;
-    this->patch.commit_hash = commit_hash;
+    this->patch->commit_hash = commit_hash;
     string cmd = "git diff " + commit_hash1 + " " + commit_hash2;
-    this->Parse_patch_git_info(exec(cmd.c_str()));
+    this->Parse_patch_git_info(exec_cmd(cmd.c_str()));
 }
 
 void Parser::Parse_patch_git_info(string str) {
@@ -52,10 +57,14 @@ void Parser::Parse_patch_git_info(string str) {
     int st_buf_size = 0;
     int ptr = 0;
     for(int i = 0; i < str.length(); i++) {
+        if (str[i] == '-') {
+            std::cout << "hit!" << std::endl;
+        }
         if (str[i] == '\n') {
             deal_with_one_line(ident_id, st_buffer);       // Process this line when it's over
             op_buffer[0] = '\0';                           // Clear the buffers
             st_buffer[0] = '\0';
+            ptr = 0;
             op_buf_size = 0;
             st_buf_size = 0;
         } else {
@@ -82,44 +91,40 @@ void Parser::Parse_patch_git_info(string str) {
 }
 
 void Parser::deal_with_one_line(int ident_id, char * st){
-    LineChange * l;
+    LineChange * l = new LineChange;
+    FileChange * new_file = new FileChange;
     switch (ident_id) {
-        case 0:         // +
+        case 0:         // +++
+            this->cur_file->final_dir = ((string)st).substr(2);
+            break;
+        case 1:         // ---
+            new_file->final_dir = ((string)st).substr(2);
+            this->patch->file_changes.push_back(*new_file);
+            this->cur_file = new_file;
+            break;
+        case 2:         // +
 
-            (*l) = {this->cur_file->orig_dir, this->cur_file->final_dir,
+            *l = {this->cur_file->orig_dir, this->cur_file->final_dir,
                     cur_ori_num, cur_fin_num, true, (string)st, this->commit_hash};
-            (*(patch.file_changes.end())).linechanges.push_back((*l);
+            (*(this->patch->file_changes.end())).linechanges.push_back(*l);
+
             this->cur_fin_num += 1;
             break;
-
-        case 1:         // -
-
+        case 3:         // -
             (*l) = {this->cur_file->orig_dir, this->cur_file->final_dir,
                     cur_ori_num, cur_fin_num, false, (string)st, this->commit_hash};
-            (*(patch.file_changes.end())).linechanges.push_back((*l);
+            (*(this->patch->file_changes.end())).linechanges.push_back(*l);
+
             /* Cur_ori_line_num & cur_fin_lin_num stay originally */
             this->cur_ori_num += 1;
             break;
 
-        case 3:         // +++
-            this->cur_file->final_dir = ((string)st).substr(2);
-            break;
-
-        case 4:         // ---
-            FileChange new_file;
-            new_file.final_dir = ((string)st).substr(2);
-            this->patch.file_changes.push_back(new_file);
-            this->cur_file = &new_file;
-            break;
-
-        case 6:         // normal lines, no addition and no deletion
+        case 4:         // normal lines, no addition and no deletion
             this->cur_ori_num += 1;
             break;
-
-        case 7:         // @@
+        case 5:         // @@
             this->parse_line_num(this->cur_ori_num, this->cur_fin_num, st);
             break;
-
         default:
             break;
     }
@@ -127,7 +132,7 @@ void Parser::deal_with_one_line(int ident_id, char * st){
 
 bool Parser::hit_identifier(char * op_buffer, int & ident_id) {
     for (int i = 0; i < identifier_size; i++) {
-        if (identifiers[i].compare(op_buffer)) {
+        if (identifiers[i].compare(op_buffer) == 0) {
             ident_id = i;
             return true;
         }

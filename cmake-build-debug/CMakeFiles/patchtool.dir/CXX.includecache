@@ -6,39 +6,23 @@
 
 #IncludeRegexTransform: 
 
-/home/xwan/patch_working_dir/patchtool/Parser.cpp
+/home/xwan/Desktop/patchtool/Parser.cpp
 Parser.h
-/home/xwan/patch_working_dir/patchtool/Parser.h
+/home/xwan/Desktop/patchtool/Parser.h
 string
 -
+iostream
+-
 
-/home/xwan/patch_working_dir/patchtool/Parser.h
+/home/xwan/Desktop/patchtool/Parser.h
 string
 -
 basic_structs.h
-/home/xwan/patch_working_dir/patchtool/basic_structs.h
+/home/xwan/Desktop/patchtool/basic_structs.h
 
-/home/xwan/patch_working_dir/patchtool/basic_structs.cpp
+/home/xwan/Desktop/patchtool/basic_structs.h
 string
 -
 list
 -
-algorithm
--
-memory
--
-stdexcept
--
-array
--
-unistd.h
--
-bits/stdc++.h
--
-
-/home/xwan/patch_working_dir/patchtool/basic_structs.h
-string
--
-basic_structs.cpp
-/home/xwan/patch_working_dir/patchtool/basic_structs.cpp
 
