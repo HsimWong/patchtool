@@ -82,25 +82,10 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/home/xwan/Desktop/patchtool/BugMod.cpp">
+		<Unit filename="/home/xwan/Desktop/patchtool/Playground.cpp">
 			<Option target="patchtool"/>
 		</Unit>
-		<Unit filename="/home/xwan/Desktop/patchtool/Commit.cpp">
-			<Option target="patchtool"/>
-		</Unit>
-		<Unit filename="/home/xwan/Desktop/patchtool/Parser.cpp">
-			<Option target="patchtool"/>
-		</Unit>
-		<Unit filename="/home/xwan/Desktop/patchtool/Parser.h">
-			<Option target="patchtool"/>
-		</Unit>
-		<Unit filename="/home/xwan/Desktop/patchtool/basic_structs.cpp">
-			<Option target="patchtool"/>
-		</Unit>
-		<Unit filename="/home/xwan/Desktop/patchtool/basic_structs.h">
-			<Option target="patchtool"/>
-		</Unit>
-		<Unit filename="/home/xwan/Desktop/patchtool/test.cpp">
+		<Unit filename="/home/xwan/Desktop/patchtool/Playground.h">
 			<Option target="patchtool"/>
 		</Unit>
 		<Unit filename="/home/xwan/Desktop/patchtool/CMakeLists.txt">

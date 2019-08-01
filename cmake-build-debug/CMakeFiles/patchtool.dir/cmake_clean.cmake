@@ -1,9 +1,5 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/patchtool.dir/basic_structs.cpp.o"
-  "CMakeFiles/patchtool.dir/BugMod.cpp.o"
-  "CMakeFiles/patchtool.dir/Commit.cpp.o"
-  "CMakeFiles/patchtool.dir/Parser.cpp.o"
-  "CMakeFiles/patchtool.dir/test.cpp.o"
+  "CMakeFiles/patchtool.dir/Playground.cpp.o"
   "patchtool.pdb"
   "patchtool"
 )

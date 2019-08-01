@@ -57,90 +57,30 @@ include CMakeFiles/patchtool.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/patchtool.dir/flags.make
 
-CMakeFiles/patchtool.dir/basic_structs.cpp.o: CMakeFiles/patchtool.dir/flags.make
-CMakeFiles/patchtool.dir/basic_structs.cpp.o: ../basic_structs.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/xwan/Desktop/patchtool/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/patchtool.dir/basic_structs.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/patchtool.dir/basic_structs.cpp.o -c /home/xwan/Desktop/patchtool/basic_structs.cpp
+CMakeFiles/patchtool.dir/Playground.cpp.o: CMakeFiles/patchtool.dir/flags.make
+CMakeFiles/patchtool.dir/Playground.cpp.o: ../Playground.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/xwan/Desktop/patchtool/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/patchtool.dir/Playground.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/patchtool.dir/Playground.cpp.o -c /home/xwan/Desktop/patchtool/Playground.cpp
 
-CMakeFiles/patchtool.dir/basic_structs.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/patchtool.dir/basic_structs.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/xwan/Desktop/patchtool/basic_structs.cpp > CMakeFiles/patchtool.dir/basic_structs.cpp.i
+CMakeFiles/patchtool.dir/Playground.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/patchtool.dir/Playground.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/xwan/Desktop/patchtool/Playground.cpp > CMakeFiles/patchtool.dir/Playground.cpp.i
 
-CMakeFiles/patchtool.dir/basic_structs.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/patchtool.dir/basic_structs.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/xwan/Desktop/patchtool/basic_structs.cpp -o CMakeFiles/patchtool.dir/basic_structs.cpp.s
-
-CMakeFiles/patchtool.dir/BugMod.cpp.o: CMakeFiles/patchtool.dir/flags.make
-CMakeFiles/patchtool.dir/BugMod.cpp.o: ../BugMod.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/xwan/Desktop/patchtool/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/patchtool.dir/BugMod.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/patchtool.dir/BugMod.cpp.o -c /home/xwan/Desktop/patchtool/BugMod.cpp
-
-CMakeFiles/patchtool.dir/BugMod.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/patchtool.dir/BugMod.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/xwan/Desktop/patchtool/BugMod.cpp > CMakeFiles/patchtool.dir/BugMod.cpp.i
-
-CMakeFiles/patchtool.dir/BugMod.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/patchtool.dir/BugMod.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/xwan/Desktop/patchtool/BugMod.cpp -o CMakeFiles/patchtool.dir/BugMod.cpp.s
-
-CMakeFiles/patchtool.dir/Commit.cpp.o: CMakeFiles/patchtool.dir/flags.make
-CMakeFiles/patchtool.dir/Commit.cpp.o: ../Commit.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/xwan/Desktop/patchtool/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/patchtool.dir/Commit.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/patchtool.dir/Commit.cpp.o -c /home/xwan/Desktop/patchtool/Commit.cpp
-
-CMakeFiles/patchtool.dir/Commit.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/patchtool.dir/Commit.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/xwan/Desktop/patchtool/Commit.cpp > CMakeFiles/patchtool.dir/Commit.cpp.i
-
-CMakeFiles/patchtool.dir/Commit.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/patchtool.dir/Commit.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/xwan/Desktop/patchtool/Commit.cpp -o CMakeFiles/patchtool.dir/Commit.cpp.s
-
-CMakeFiles/patchtool.dir/Parser.cpp.o: CMakeFiles/patchtool.dir/flags.make
-CMakeFiles/patchtool.dir/Parser.cpp.o: ../Parser.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/xwan/Desktop/patchtool/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/patchtool.dir/Parser.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/patchtool.dir/Parser.cpp.o -c /home/xwan/Desktop/patchtool/Parser.cpp
-
-CMakeFiles/patchtool.dir/Parser.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/patchtool.dir/Parser.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/xwan/Desktop/patchtool/Parser.cpp > CMakeFiles/patchtool.dir/Parser.cpp.i
-
-CMakeFiles/patchtool.dir/Parser.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/patchtool.dir/Parser.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/xwan/Desktop/patchtool/Parser.cpp -o CMakeFiles/patchtool.dir/Parser.cpp.s
-
-CMakeFiles/patchtool.dir/test.cpp.o: CMakeFiles/patchtool.dir/flags.make
-CMakeFiles/patchtool.dir/test.cpp.o: ../test.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/xwan/Desktop/patchtool/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/patchtool.dir/test.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/patchtool.dir/test.cpp.o -c /home/xwan/Desktop/patchtool/test.cpp
-
-CMakeFiles/patchtool.dir/test.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/patchtool.dir/test.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/xwan/Desktop/patchtool/test.cpp > CMakeFiles/patchtool.dir/test.cpp.i
-
-CMakeFiles/patchtool.dir/test.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/patchtool.dir/test.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/xwan/Desktop/patchtool/test.cpp -o CMakeFiles/patchtool.dir/test.cpp.s
+CMakeFiles/patchtool.dir/Playground.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/patchtool.dir/Playground.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/xwan/Desktop/patchtool/Playground.cpp -o CMakeFiles/patchtool.dir/Playground.cpp.s
 
 # Object files for target patchtool
 patchtool_OBJECTS = \
-"CMakeFiles/patchtool.dir/basic_structs.cpp.o" \
-"CMakeFiles/patchtool.dir/BugMod.cpp.o" \
-"CMakeFiles/patchtool.dir/Commit.cpp.o" \
-"CMakeFiles/patchtool.dir/Parser.cpp.o" \
-"CMakeFiles/patchtool.dir/test.cpp.o"
+"CMakeFiles/patchtool.dir/Playground.cpp.o"
 
 # External object files for target patchtool
 patchtool_EXTERNAL_OBJECTS =
 
-patchtool: CMakeFiles/patchtool.dir/basic_structs.cpp.o
-patchtool: CMakeFiles/patchtool.dir/BugMod.cpp.o
-patchtool: CMakeFiles/patchtool.dir/Commit.cpp.o
-patchtool: CMakeFiles/patchtool.dir/Parser.cpp.o
-patchtool: CMakeFiles/patchtool.dir/test.cpp.o
+patchtool: CMakeFiles/patchtool.dir/Playground.cpp.o
 patchtool: CMakeFiles/patchtool.dir/build.make
 patchtool: CMakeFiles/patchtool.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/xwan/Desktop/patchtool/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable patchtool"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/xwan/Desktop/patchtool/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable patchtool"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/patchtool.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

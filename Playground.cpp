@@ -3,6 +3,7 @@
 //
 #include <iostream>
 #include <string>
+#include <cstdio>
 #define INFINITY 65535
 using namespace std;
 
@@ -11,46 +12,95 @@ string identifiers[identifier_size] = {
          "+++", "---","+", "-",
         " ", "@@", "new file mode",
          "Binary files","diff --git",
-        "\\No newline at the end of file", "index"
+        "\\No newline at the end of file", "*index"
 };
-
 
 void char_star_assign(string input, char * str) {
     for (int i = 0; i < input.length(); i++ ) {
         str[i] = input[i];
-        str[i + 1] = '\0';
     }
+    str[input.length()] = '\0';
 }
 
-// int parse_ident(string str, char * op, char * st, int index) {
-//     int ret_val = INFINITY;
-//     for (int i = index; i < str.length(); i++) {
-//         if (str[i] == '+') {
-//             if (str.substr(i, i + 3).compare("+++") == 0) {
-//                 ret_val = 0;
-//                 char_star_assign("+++", op);
-//                 char_star_assign(str.substr(), st);
-//             }
 
 
-//             ret_val = (str.substr(i, i + 2).compare("+++") == 0) ? 0 : 2;
-            
-//             st = str.substr(i + 4, str.find('\n'))
-//         } else if (str[i] == '-') {
-//             ret_val = (str.substr(i, i + 2).compare("---") == 0) ? 1 : 3;
-//         }
-//     }
-// }
+/* Duplicated part can be modulized to a function
+ * Do it later. 15:21, 1, Aug, 2019*/
+int parse_ident(string str, char * op, char * st, int *index) {
+    int ret_val = INFINITY;
+    int st_length = INFINITY;
+//    printf("%d\n", index);
+    // // *index++;
+    for (int i = *index; i < str.length(); i++) {
+        switch (str[i]) {
+        case '+':
+            if (str.substr(i, 3).compare("+++") == 0) {
+                char_star_assign("+++", op);
+                st_length = str.substr(i).find('\n') + 1;
+                char_star_assign(str.substr(i + 4, st_length-5), st);
+                *index = *index + (st_length);
+                return 0;
+            } else {
+                cout << "index" << *index << endl;
+                char_star_assign("+", op);
+                st_length = str.substr(i).find('\n');
+                cout << "stlength" << st_length << endl;
+                char_star_assign(str.substr(i + 1, st_length-1), st);
+                *index += (st_length + 1);
+                return 2;
+            }
+            break;
+        case '-':
+            if (str.substr(i, 3).compare("---") == 0) {
+                char_star_assign("---", op);
+                st_length = str.substr(i).find('\n') + 1;
+                char_star_assign(str.substr(i + 4, st_length-5), st);
+                *index = *index + (st_length);
+                return 1;
+            } else {
+                cout << "index" << *index << endl;
+                char_star_assign("-", op);
+                st_length = str.substr(i).find('\n');
+                cout << "stlength" << st_length << endl;
+                char_star_assign(str.substr(i + 1, st_length-1), st);
+                *index += (st_length + 1);
+                return 3;
+            }
+            break;
+        case '@':
+            char_star_assign("@@", op);
+            st_length = str.substr(i).find('\n')-i-2;
+            char_star_assign(str.substr(i + 2, st_length), st);
+            *index += (st_length + 3);
+            return 5;
+        case ' ':
+            char_star_assign(" ", op);
+            st_length = str.substr(i).find('\n')-i-1;
+            char_star_assign(str.substr(i + 2, st_length), st);
+            *index += (st_length + 3);
+            return 4;
+        default:
+            st_length = str.substr(i).find('\n')-i;
+            char_star_assign(str.substr(i,st_length), st);
+            *index += (st_length);
+            return INFINITY;
+        }
+    }
+    return INFINITY;
+}
 
 
 int main(int argc, char const *argv[]) {
-    string a = "we are the world";
-    string b = a.substr(5,7);
-    char c[5];
-    char_star_assign("qqq", c);
-
-    cout << b << endl;
-    cout << c << endl;
+    string str= "+1234567879\n@@ 123456\n 12345\n--- 123456\n";
+    char op[32];
+    char st[512];
+    int index = 12;
+//    cout << str[11] << endl;
+//    *index = 0;
+//    printf("%d\n", index);
+//    printf("%d\n", &index);
+    int ret = parse_ident(str, op, st, &index);
+    printf("ret:%d, \nop:%s, \nst:%s, \n*index:%d", ret, op, st, index);
 
     return 0;
 }
