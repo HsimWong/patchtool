@@ -49,46 +49,124 @@ Parser::Parser(string commit_hash1, string commit_hash2) {
     this->Parse_patch_git_info(exec_cmd(cmd.c_str()));
 }
 
-void Parser::Parse_patch_git_info(string str) {
-    char * op_buffer = new char[32];    // buffer for operator
-    int ident_id = INFTY;
-    char * st_buffer = new char[512];   // buffer for statement
-    int op_buf_size = 0;
-    int st_buf_size = 0;
-    int ptr = 0;
-    for(int i = 0; i < str.length(); i++) {
-        if (str[i] == '-') {
-            std::cout << "hit!" << std::endl;
-        }
-        if (str[i] == '\n') {
-            deal_with_one_line(ident_id, st_buffer);       // Process this line when it's over
-            op_buffer[0] = '\0';                           // Clear the buffers
-            st_buffer[0] = '\0';
-            ptr = 0;
-            op_buf_size = 0;
-            st_buf_size = 0;
-        } else {
-            switch (ptr)
-            {
-                case 0:
-                    op_buffer[op_buf_size] = str[i];
-                    op_buffer[++op_buf_size] = '\0';
-                    if (hit_identifier(op_buffer, ident_id)) {
-                        ptr = 1;
-                    }
-                    break;
-                case 1:
-                    st_buffer[st_buf_size] = str[i];
-                    st_buffer[++st_buf_size] = '\0';
-                    // if ((str[i] == '\n') || (str[i] == '\0')) {
-                    //     this->deal_with_one_line(ident_id, st_buffer);
-                    // }
-                default:
-                    break;
+int parse_ident(string str, char * op, char * st, int *index) {
+    int ret_val = INFINITY;
+    int st_length = INFINITY;
+//    printf("%d\n", index);
+    // // *index++;
+    for (int i = *index; i < str.length(); i++) {
+        switch (str[i]) {
+        case '+':
+            if (str.substr(i, 3).compare("+++") == 0) {
+                char_star_assign("+++", op);
+                st_length = str.substr(i).find('\n') + 1;
+                char_star_assign(str.substr(i + 4, st_length-5), st);
+                *index = *index + (st_length);
+                return 0;
+            } else {
+                cout << "index" << *index << endl;
+                char_star_assign("+", op);
+                st_length = str.substr(i).find('\n');
+                cout << "stlength" << st_length << endl;
+                char_star_assign(str.substr(i + 1, st_length-1), st);
+                *index += (st_length + 1);
+                return 2;
             }
+            break;
+        case '-':
+            if (str.substr(i, 3).compare("---") == 0) {
+                char_star_assign("---", op);
+                st_length = str.substr(i).find('\n') + 1;
+                char_star_assign(str.substr(i + 4, st_length-5), st);
+                *index = *index + (st_length);
+                return 1;
+            } else {
+                cout << "index" << *index << endl;
+                char_star_assign("-", op);
+                st_length = str.substr(i).find('\n');
+                cout << "stlength" << st_length << endl;
+                char_star_assign(str.substr(i + 1, st_length-1), st);
+                *index += (st_length + 1);
+                return 3;
+            }
+            break;
+        case '@':
+            char_star_assign("@@", op);
+            st_length = str.substr(i).find('\n');
+            cout << st_length << endl;
+
+            char_star_assign(str.substr(i + 3, st_length - 3), st);
+            *index += (st_length + 1);
+            return 5;
+        case ' ':
+            cout << "index" << *index << endl;
+            char_star_assign(" ", op);
+            st_length = str.substr(i).find('\n');
+            cout << "stlength" << st_length << endl;
+            char_star_assign(str.substr(i + 1, st_length-1), st);
+            *index += (st_length + 1);
+            return 4;
+        default:
+            st_length = str.substr(i).find('\n')-i;
+            char_star_assign(str.substr(i,st_length), st);
+            *index += (st_length);
+            return INFTY;
         }
     }
+    return INFTY;
 }
+
+void Parser::Parse_patch_git_info(string str) {
+    char * op = new char[32];
+    char * st = new char[512];
+    int op_code = INFTY;
+    int start_ind = 0;
+    while (start_ind != (str.length())) {
+        op_code = parse_ident(str, op, st, &start_ind);
+        this->deal_with_one_line(opcode, st);
+    }
+}
+
+// void Parser::Parse_patch_git_info(string str) {
+//     char * op_buffer = new char[32];    // buffer for operator
+//     int ident_id = INFTY;
+//     char * st_buffer = new char[512];   // buffer for statement
+//     int op_buf_size = 0;
+//     int st_buf_size = 0;
+//     int ptr = 0;
+//     for(int i = 0; i < str.length(); i++) {
+//         if (str[i] == '-') {
+//             std::cout << "hit!" << std::endl;
+//         }
+//         if (str[i] == '\n') {
+//             deal_with_one_line(ident_id, st_buffer);       // Process this line when it's over
+//             op_buffer[0] = '\0';                           // Clear the buffers
+//             st_buffer[0] = '\0';
+//             ptr = 0;
+//             op_buf_size = 0;
+//             st_buf_size = 0;
+//         } else {
+//             switch (ptr)
+//             {
+//                 case 0:
+//                     op_buffer[op_buf_size] = str[i];
+//                     op_buffer[++op_buf_size] = '\0';
+//                     if (hit_identifier(op_buffer, ident_id)) {
+//                         ptr = 1;
+//                     }
+//                     break;
+//                 case 1:
+//                     st_buffer[st_buf_size] = str[i];
+//                     st_buffer[++st_buf_size] = '\0';
+//                     // if ((str[i] == '\n') || (str[i] == '\0')) {
+//                     //     this->deal_with_one_line(ident_id, st_buffer);
+//                     // }
+//                 default:
+//                     break;
+//             }
+//         }
+//     }
+// }
 
 void Parser::deal_with_one_line(int ident_id, char * st){
     LineChange * l = new LineChange;

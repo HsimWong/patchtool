@@ -69,24 +69,28 @@ int parse_ident(string str, char * op, char * st, int *index) {
             break;
         case '@':
             char_star_assign("@@", op);
-            st_length = str.substr(i).find('\n')-i-2;
-            char_star_assign(str.substr(i + 2, st_length), st);
-            *index += (st_length + 3);
+            st_length = str.substr(i).find('\n');
+            cout << st_length << endl;
+
+            char_star_assign(str.substr(i + 3, st_length - 3), st);
+            *index += (st_length + 1);
             return 5;
         case ' ':
+            cout << "index" << *index << endl;
             char_star_assign(" ", op);
-            st_length = str.substr(i).find('\n')-i-1;
-            char_star_assign(str.substr(i + 2, st_length), st);
-            *index += (st_length + 3);
+            st_length = str.substr(i).find('\n');
+            cout << "stlength" << st_length << endl;
+            char_star_assign(str.substr(i + 1, st_length-1), st);
+            *index += (st_length + 1);
             return 4;
         default:
             st_length = str.substr(i).find('\n')-i;
             char_star_assign(str.substr(i,st_length), st);
             *index += (st_length);
-            return INFINITY;
+            return INFTY;
         }
     }
-    return INFINITY;
+    return INFTY;
 }
 
 
@@ -94,7 +98,8 @@ int main(int argc, char const *argv[]) {
     string str= "+1234567879\n@@ 123456\n 12345\n--- 123456\n";
     char op[32];
     char st[512];
-    int index = 12;
+    int index = 29;
+    cout << str[index] << endl;
 //    cout << str[11] << endl;
 //    *index = 0;
 //    printf("%d\n", index);
