@@ -8,7 +8,9 @@ class BugMod {
 private:
     string bug_commit_hash;
     string cur_commit_hash;
+    
 public:
+    int get_new_line_num(LineChange * lc);
     BugMod(string bug_commit_hash, string cur_commit_hash);
     ~BugMod();
 };
@@ -20,8 +22,11 @@ BugMod::BugMod(string bug_commit_hash, string cur_commit_hash) {
     Parser * mod_bug = new Parser(bug_commit_hash, cur_commit_hash);
 }
 
-BugMod::~BugMod() {
+int BugMod::get_new_line_num(LineChange * lc) {
+    for 
 }
+
+
 
 int main(int argc, char const *argv[]) {
     int a = 5;

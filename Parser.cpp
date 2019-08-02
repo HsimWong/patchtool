@@ -29,22 +29,24 @@ string identifiers[identifier_size] = {
 
 
 Parser::Parser(string commit_hash) {
-    this -> cur_ori_num = 1;
-    this -> cur_fin_num = 1;
-    this -> commit_hash = commit_hash;
-    this-> patch = new Patch;
-    this->patch->commit_hash = commit_hash;
+    this->cur_ori_num = 1;
+    this->cur_fin_num = 1;
+    this->commit_hash = commit_hash;
+    this->patch = *(new Patch);
+    this->patch.file_changes = *(new list<FileChange *>);
+    this->patch.commit_hash = commit_hash;
     string cmd = "git diff " + commit_hash;
     string git_info = exec_cmd((cmd.c_str()));
     this->Parse_patch_git_info(git_info);
 }
 
 Parser::Parser(string commit_hash1, string commit_hash2) {
-    this -> cur_ori_num = 1;
-    this -> cur_fin_num = 1;
-    this->patch = new Patch;
-    this -> commit_hash = commit_hash;
-    this->patch->commit_hash = commit_hash;
+    this->cur_ori_num = 1;
+    this->cur_fin_num = 1;
+    this->patch = *(new Patch);
+    this->patch.file_changes = *(new list<FileChange *>);
+    this->commit_hash = commit_hash;
+    this->patch.commit_hash = commit_hash;
     string cmd = "git diff " + commit_hash1 + " " + commit_hash2;
     this->Parse_patch_git_info(exec_cmd(cmd.c_str()));
 }
@@ -59,8 +61,6 @@ void char_star_assign(string input, char * str) {
 int parse_ident(string str, char * op, char * st, int *index) {
     int ret_val = INFTY;
     int st_length = INFTY;
-//    printf("%d\n", index);
-    // // *index++;
     for (int i = *index; i < str.length(); i++) {
         switch (str[i]) {
         case '+':
@@ -134,55 +134,64 @@ void Parser::Parse_patch_git_info(string str) {
     }
 }
 
+/* Function here uses if-else rather than switch
+ * for switch only allows one declaration */
 void Parser::deal_with_one_line(int ident_id, char * st){
-    LineChange * l = new LineChange;
-    FileChange * new_file = new FileChange;
-    switch (ident_id) {
-        case 0:         // +++
-            this->cur_file->final_dir = ((string)st).substr(2);
-            break;
-        case 1:         // ---
-            new_file->final_dir = ((string)st).substr(2);
-            this->patch->file_changes.push_back(*new_file);
-            this->cur_file = new_file;
-            break;
-        case 2:         // +
 
-            *l = {this->cur_file->orig_dir, this->cur_file->final_dir,
-                    cur_ori_num, cur_fin_num, true, (string)st, this->commit_hash};
-            (*(this->patch->file_changes.end())).linechanges.push_back(*l);
-
-            this->cur_fin_num += 1;
-            break;
-        case 3:         // -
-            (*l) = {this->cur_file->orig_dir, this->cur_file->final_dir,
-                    cur_ori_num, cur_fin_num, false, (string)st, this->commit_hash};
-            (*(this->patch->file_changes.end())).linechanges.push_back(*l);
-
-            /* Cur_ori_line_num & cur_fin_lin_num stay originally */
-            this->cur_ori_num += 1;
-            break;
-
-        case 4:         // normal lines, no addition and no deletion
-            this->cur_ori_num += 1;
-            break;
-        case 5:         // @@
+    if (ident_id == 1) {        // ---
+        FileChange fc = {};
+        fc.linechanges = *(new list<LineChange *>);
+        fc.orig_dir = st;
+        this->patch.file_changes.push_back(&fc);
+        return;
+    } else if (ident_id == 0) { // +++
+        (*(this->patch.file_changes.rbegin()))->final_dir = st;
+        return;
+    } else if (ident_id == 2) { // +
+        LineChange lc = *(new LineChange);
+        lc = {(*(this->patch.file_changes.rbegin()))->orig_dir,
+              (*(this->patch.file_changes.rbegin()))->final_dir,
+              this->cur_ori_num,
+              this->cur_fin_num,
+              1,
+              st,
+              this->commit_hash};
+        this->cur_fin_num += 1;
+        (*(this->patch.file_changes.rbegin()))->linechanges.push_back(&lc);
+        return;
+    } else if (ident_id == 3) { // '-'
+        LineChange lc = *(new LineChange);
+        lc = {(*(this->patch.file_changes.rbegin()))->orig_dir,
+              (*(this->patch.file_changes.rbegin()))->final_dir,
+              this->cur_ori_num,
+              this->cur_fin_num,
+              -1,
+              st,
+              this->commit_hash};
+        this->cur_ori_num += 1;
+        (*(this->patch.file_changes.rbegin()))->linechanges.push_back(&lc);
+        return;
+    } else if (ident_id == 4) {  // ' '
+        LineChange lc = *(new LineChange);
+        lc = {(*(this->patch.file_changes.rbegin()))->orig_dir,
+              (*(this->patch.file_changes.rbegin()))->final_dir,
+              this->cur_ori_num,
+              this->cur_fin_num,
+              -1,
+              st,
+              this->commit_hash};
+        this->cur_ori_num += 1;
+        this->cur_fin_num += 1;
+        (*(this->patch.file_changes.rbegin()))->linechanges.push_back(&lc);
+        return;
+    } else {
+        if (ident_id == 5) { // @@
+            FileChange fc = *(new FileChange);
+            fc.linechanges = *(new list<LineChange *>);
+            fc.orig_dir = (*(this->patch.file_changes.rbegin()))->orig_dir;
             this->parse_line_num(this->cur_ori_num, this->cur_fin_num, st);
-            break;
-        default:
-            break;
-    }
-}
-
-bool Parser::hit_identifier(char * op_buffer, int & ident_id) {
-    for (int i = 0; i < identifier_size; i++) {
-        if (identifiers[i].compare(op_buffer) == 0) {
-            ident_id = i;
-            return true;
         }
     }
-    ident_id = INFTY;
-    return false;
 }
 
 int fetch_int(char * cha, int & i) {
@@ -190,7 +199,6 @@ int fetch_int(char * cha, int & i) {
     for (int j = i + 1; cha[i] != 0; j++) {
         if (cha[j] == ',') {
             return stoi(start_num);
-            i = j;
         } else {
             start_num += cha[j];
         }

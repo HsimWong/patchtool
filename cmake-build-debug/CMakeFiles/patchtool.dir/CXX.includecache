@@ -6,6 +6,16 @@
 
 #IncludeRegexTransform: 
 
+/home/xwan/Desktop/patchtool/BugMod.cpp
+iostream
+-
+Parser.h
+/home/xwan/Desktop/patchtool/Parser.h
+basic_structs.h
+/home/xwan/Desktop/patchtool/basic_structs.h
+string
+-
+
 /home/xwan/Desktop/patchtool/Parser.cpp
 Parser.h
 /home/xwan/Desktop/patchtool/Parser.h

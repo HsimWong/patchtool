@@ -1,111 +1,56 @@
-//
-// Created by xwan on 8/1/19.
-//
 #include <iostream>
-#include <string>
-#include <cstdio>
-#define INFINITY 65535
+#include <algorithm>
+#include <list>
+#include "basic_structs.h"
 using namespace std;
 
-const int identifier_size = 11;
-string identifiers[identifier_size] = {
-         "+++", "---","+", "-",
-        " ", "@@", "new file mode",
-         "Binary files","diff --git",
-        "\\No newline at the end of file", "*index"
-};
-
-void char_star_assign(string input, char * str) {
-    for (int i = 0; i < input.length(); i++ ) {
-        str[i] = input[i];
+int fetch_int(char * cha, int & i) {
+    string start_num = "";
+    for (int j = i + 1; cha[i] != 0; j++) {
+        if (cha[j] == ',') {
+            return stoi(start_num);
+            i = j;
+        } else {
+            start_num += cha[j];
+        }
+        i = j;
     }
-    str[input.length()] = '\0';
 }
 
-
-
-/* Duplicated part can be modulized to a function
- * Do it later. 15:21, 1, Aug, 2019*/
-int parse_ident(string str, char * op, char * st, int *index) {
-    int ret_val = INFINITY;
-    int st_length = INFINITY;
-//    printf("%d\n", index);
-    // // *index++;
-    for (int i = *index; i < str.length(); i++) {
-        switch (str[i]) {
-        case '+':
-            if (str.substr(i, 3).compare("+++") == 0) {
-                char_star_assign("+++", op);
-                st_length = str.substr(i).find('\n') + 1;
-                char_star_assign(str.substr(i + 4, st_length-5), st);
-                *index = *index + (st_length);
-                return 0;
-            } else {
-                cout << "index" << *index << endl;
-                char_star_assign("+", op);
-                st_length = str.substr(i).find('\n');
-                cout << "stlength" << st_length << endl;
-                char_star_assign(str.substr(i + 1, st_length-1), st);
-                *index += (st_length + 1);
-                return 2;
-            }
+void parse_line_num(int & ori_num, int & fin_num, char * cha) {
+    for (int i = 0; cha[i] != '\0'; i++) {
+        if (cha[i] == '+') {
+            ori_num = fetch_int(cha, i);
+        } else if (cha[i] == '-') {
+            fin_num = fetch_int(cha, i);
             break;
-        case '-':
-            if (str.substr(i, 3).compare("---") == 0) {
-                char_star_assign("---", op);
-                st_length = str.substr(i).find('\n') + 1;
-                char_star_assign(str.substr(i + 4, st_length-5), st);
-                *index = *index + (st_length);
-                return 1;
-            } else {
-                cout << "index" << *index << endl;
-                char_star_assign("-", op);
-                st_length = str.substr(i).find('\n');
-                cout << "stlength" << st_length << endl;
-                char_star_assign(str.substr(i + 1, st_length-1), st);
-                *index += (st_length + 1);
-                return 3;
-            }
-            break;
-        case '@':
-            char_star_assign("@@", op);
-            st_length = str.substr(i).find('\n');
-            cout << st_length << endl;
-
-            char_star_assign(str.substr(i + 3, st_length - 3), st);
-            *index += (st_length + 1);
-            return 5;
-        case ' ':
-            cout << "index" << *index << endl;
-            char_star_assign(" ", op);
-            st_length = str.substr(i).find('\n');
-            cout << "stlength" << st_length << endl;
-            char_star_assign(str.substr(i + 1, st_length-1), st);
-            *index += (st_length + 1);
-            return 4;
-        default:
-            st_length = str.substr(i).find('\n')-i;
-            char_star_assign(str.substr(i,st_length), st);
-            *index += (st_length);
-            return INFTY;
+        } else {
+            continue;
         }
     }
-    return INFTY;
 }
 
-
 int main(int argc, char const *argv[]) {
-    string str= "+1234567879\n@@ 123456\n 12345\n--- 123456\n";
-    char op[32];
-    char st[512];
-    int index = 29;
-    cout << str[index] << endl;
-//    cout << str[11] << endl;
-//    *index = 0;
-//    printf("%d\n", index);
-//    printf("%d\n", &index);
-    int ret = parse_ident(str, op, st, &index);
-    printf("ret:%d, \nop:%s, \nst:%s, \n*index:%d", ret, op, st, index);
+    char * info = "@@ +245, 13 -175,35 @@";
+    int start_num = 0;
+    int final_num = 0;
+    parse_line_num(start_num, final_num, info);
+    cout << start_num << endl;
+    cout << final_num << endl;
+    cout << info << endl;
+    
+    // Patch patch = *(new Patch);
+    // patch.commit_hash = "commit_hash";
+    // cout << patch.commit_hash << endl;
+    // patch.file_changes = *(new list<FileChange *>);
+    // FileChange fc = *(new FileChange);
+    // fc.final_dir = "final+dir";
+    // cout << fc.final_dir << endl;
+    // patch.file_changes.push_back(&fc);
+    // printf("%d\n", &fc);
+    // printf("%d\n", *(patch.file_changes.rbegin()));
+    // // cout << patch.file_changes.begin() << endl;
+
 
     return 0;
 }

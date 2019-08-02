@@ -9,7 +9,7 @@ struct LineChange {
     string final_dir;
     int inserted_line_num;
     int result_line_num;
-    bool if_inserted;
+    int if_inserted;            // INSERTED: 1, DELETED: -1, UNMODIFIED: 0
     string line_content;
     string commit_hash;
 };
@@ -17,12 +17,12 @@ struct LineChange {
 struct FileChange{
     string orig_dir;
     string final_dir;
-    list<LineChange> linechanges;
+    list<LineChange *> linechanges;
 };
 
 struct Patch {
     string commit_hash;
-    list<FileChange> file_changes;
+    list<FileChange *> file_changes;
 
 };
 
