@@ -19,9 +19,9 @@ int fetch_int(char * cha, int & i) {
 
 void parse_line_num(int & ori_num, int & fin_num, char * cha) {
     for (int i = 0; cha[i] != '\0'; i++) {
-        if (cha[i] == '+') {
+        if (cha[i] == '-') {
             ori_num = fetch_int(cha, i);
-        } else if (cha[i] == '-') {
+        } else if (cha[i] == '+') {
             fin_num = fetch_int(cha, i);
             break;
         } else {
@@ -31,7 +31,7 @@ void parse_line_num(int & ori_num, int & fin_num, char * cha) {
 }
 
 int main(int argc, char const *argv[]) {
-    char * info = "@@ +245, 13 -175,35 @@";
+    char * info = "@@ -245, 13 +175,35 @@";
     int start_num = 0;
     int final_num = 0;
     parse_line_num(start_num, final_num, info);

@@ -208,9 +208,9 @@ int fetch_int(char * cha, int & i) {
 
 void Parser::parse_line_num(int & ori_num, int & fin_num, char * cha) {
     for (int i = 0; cha[i] != '\0'; i++) {
-        if (cha[i] == '+') {
+        if (cha[i] == '-') {
             ori_num = fetch_int(cha, i);
-        } else if (cha[i] == '-') {
+        } else if (cha[i] == '+') {
             fin_num = fetch_int(cha, i);
             break;
         } else {
