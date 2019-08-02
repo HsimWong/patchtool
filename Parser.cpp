@@ -49,9 +49,16 @@ Parser::Parser(string commit_hash1, string commit_hash2) {
     this->Parse_patch_git_info(exec_cmd(cmd.c_str()));
 }
 
+void char_star_assign(string input, char * str) {
+    for (int i = 0; i < input.length(); i++ ) {
+        str[i] = input[i];
+    }
+    str[input.length()] = '\0';
+}
+
 int parse_ident(string str, char * op, char * st, int *index) {
-    int ret_val = INFINITY;
-    int st_length = INFINITY;
+    int ret_val = INFTY;
+    int st_length = INFTY;
 //    printf("%d\n", index);
     // // *index++;
     for (int i = *index; i < str.length(); i++) {
@@ -107,9 +114,9 @@ int parse_ident(string str, char * op, char * st, int *index) {
             *index += (st_length + 1);
             return 4;
         default:
-            st_length = str.substr(i).find('\n')-i;
+            st_length = str.substr(i).find('\n');
             char_star_assign(str.substr(i,st_length), st);
-            *index += (st_length);
+            *index += (st_length+1);
             return INFTY;
         }
     }
@@ -123,50 +130,9 @@ void Parser::Parse_patch_git_info(string str) {
     int start_ind = 0;
     while (start_ind != (str.length())) {
         op_code = parse_ident(str, op, st, &start_ind);
-        this->deal_with_one_line(opcode, st);
+        this->deal_with_one_line(op_code, st);
     }
 }
-
-// void Parser::Parse_patch_git_info(string str) {
-//     char * op_buffer = new char[32];    // buffer for operator
-//     int ident_id = INFTY;
-//     char * st_buffer = new char[512];   // buffer for statement
-//     int op_buf_size = 0;
-//     int st_buf_size = 0;
-//     int ptr = 0;
-//     for(int i = 0; i < str.length(); i++) {
-//         if (str[i] == '-') {
-//             std::cout << "hit!" << std::endl;
-//         }
-//         if (str[i] == '\n') {
-//             deal_with_one_line(ident_id, st_buffer);       // Process this line when it's over
-//             op_buffer[0] = '\0';                           // Clear the buffers
-//             st_buffer[0] = '\0';
-//             ptr = 0;
-//             op_buf_size = 0;
-//             st_buf_size = 0;
-//         } else {
-//             switch (ptr)
-//             {
-//                 case 0:
-//                     op_buffer[op_buf_size] = str[i];
-//                     op_buffer[++op_buf_size] = '\0';
-//                     if (hit_identifier(op_buffer, ident_id)) {
-//                         ptr = 1;
-//                     }
-//                     break;
-//                 case 1:
-//                     st_buffer[st_buf_size] = str[i];
-//                     st_buffer[++st_buf_size] = '\0';
-//                     // if ((str[i] == '\n') || (str[i] == '\0')) {
-//                     //     this->deal_with_one_line(ident_id, st_buffer);
-//                     // }
-//                 default:
-//                     break;
-//             }
-//         }
-//     }
-// }
 
 void Parser::deal_with_one_line(int ident_id, char * st){
     LineChange * l = new LineChange;

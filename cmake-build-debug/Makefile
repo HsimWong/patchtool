@@ -123,32 +123,140 @@ patchtool/fast:
 	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/build
 .PHONY : patchtool/fast
 
-Playground.o: Playground.cpp.o
+BugMod.o: BugMod.cpp.o
 
-.PHONY : Playground.o
+.PHONY : BugMod.o
 
 # target to build an object file
-Playground.cpp.o:
-	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Playground.cpp.o
-.PHONY : Playground.cpp.o
+BugMod.cpp.o:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/BugMod.cpp.o
+.PHONY : BugMod.cpp.o
 
-Playground.i: Playground.cpp.i
+BugMod.i: BugMod.cpp.i
 
-.PHONY : Playground.i
+.PHONY : BugMod.i
 
 # target to preprocess a source file
-Playground.cpp.i:
-	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Playground.cpp.i
-.PHONY : Playground.cpp.i
+BugMod.cpp.i:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/BugMod.cpp.i
+.PHONY : BugMod.cpp.i
 
-Playground.s: Playground.cpp.s
+BugMod.s: BugMod.cpp.s
 
-.PHONY : Playground.s
+.PHONY : BugMod.s
 
 # target to generate assembly for a file
-Playground.cpp.s:
-	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Playground.cpp.s
-.PHONY : Playground.cpp.s
+BugMod.cpp.s:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/BugMod.cpp.s
+.PHONY : BugMod.cpp.s
+
+Commit.o: Commit.cpp.o
+
+.PHONY : Commit.o
+
+# target to build an object file
+Commit.cpp.o:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Commit.cpp.o
+.PHONY : Commit.cpp.o
+
+Commit.i: Commit.cpp.i
+
+.PHONY : Commit.i
+
+# target to preprocess a source file
+Commit.cpp.i:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Commit.cpp.i
+.PHONY : Commit.cpp.i
+
+Commit.s: Commit.cpp.s
+
+.PHONY : Commit.s
+
+# target to generate assembly for a file
+Commit.cpp.s:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Commit.cpp.s
+.PHONY : Commit.cpp.s
+
+Parser.o: Parser.cpp.o
+
+.PHONY : Parser.o
+
+# target to build an object file
+Parser.cpp.o:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Parser.cpp.o
+.PHONY : Parser.cpp.o
+
+Parser.i: Parser.cpp.i
+
+.PHONY : Parser.i
+
+# target to preprocess a source file
+Parser.cpp.i:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Parser.cpp.i
+.PHONY : Parser.cpp.i
+
+Parser.s: Parser.cpp.s
+
+.PHONY : Parser.s
+
+# target to generate assembly for a file
+Parser.cpp.s:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Parser.cpp.s
+.PHONY : Parser.cpp.s
+
+basic_structs.o: basic_structs.cpp.o
+
+.PHONY : basic_structs.o
+
+# target to build an object file
+basic_structs.cpp.o:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/basic_structs.cpp.o
+.PHONY : basic_structs.cpp.o
+
+basic_structs.i: basic_structs.cpp.i
+
+.PHONY : basic_structs.i
+
+# target to preprocess a source file
+basic_structs.cpp.i:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/basic_structs.cpp.i
+.PHONY : basic_structs.cpp.i
+
+basic_structs.s: basic_structs.cpp.s
+
+.PHONY : basic_structs.s
+
+# target to generate assembly for a file
+basic_structs.cpp.s:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/basic_structs.cpp.s
+.PHONY : basic_structs.cpp.s
+
+test.o: test.cpp.o
+
+.PHONY : test.o
+
+# target to build an object file
+test.cpp.o:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/test.cpp.o
+.PHONY : test.cpp.o
+
+test.i: test.cpp.i
+
+.PHONY : test.i
+
+# target to preprocess a source file
+test.cpp.i:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/test.cpp.i
+.PHONY : test.cpp.i
+
+test.s: test.cpp.s
+
+.PHONY : test.s
+
+# target to generate assembly for a file
+test.cpp.s:
+	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/test.cpp.s
+.PHONY : test.cpp.s
 
 # Help Target
 help:
@@ -159,9 +267,21 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... patchtool"
 	@echo "... edit_cache"
-	@echo "... Playground.o"
-	@echo "... Playground.i"
-	@echo "... Playground.s"
+	@echo "... BugMod.o"
+	@echo "... BugMod.i"
+	@echo "... BugMod.s"
+	@echo "... Commit.o"
+	@echo "... Commit.i"
+	@echo "... Commit.s"
+	@echo "... Parser.o"
+	@echo "... Parser.i"
+	@echo "... Parser.s"
+	@echo "... basic_structs.o"
+	@echo "... basic_structs.i"
+	@echo "... basic_structs.s"
+	@echo "... test.o"
+	@echo "... test.i"
+	@echo "... test.s"
 .PHONY : help
 
 
