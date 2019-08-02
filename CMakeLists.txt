@@ -9,8 +9,9 @@ add_executable(patchtool
         basic_structs.cpp
         basic_structs.h
         BugMod.cpp
+        BugMod.h
         Commit.cpp
         Parser.cpp
         Parser.h
-        test.cpp  Parser.cpp Parser.h)
+        test.cpp   Parser.h)
 #        Playground.cpp)

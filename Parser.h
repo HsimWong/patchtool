@@ -13,13 +13,13 @@ class Parser {
 public:
     Patch patch;
     FileChange * cur_file;
-    int cur_ori_num{};
-    int cur_fin_num{};
-    string commit_hash{};
+    int cur_ori_num;
+    int cur_fin_num;
+    string commit_hash;
     void deal_with_one_line(int ident_id, char * st);
     void Parse_patch_git_info(string str);
     void parse_line_num(int & ori_num, int & fin_num, char * cha);
-    Parser(string commit_hash);
+    explicit Parser(string commit_hash);
     Parser(string commit_hash1, string commit_hash2);
 };
 

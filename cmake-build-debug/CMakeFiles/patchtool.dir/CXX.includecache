@@ -13,16 +13,18 @@ Parser.h
 /home/xwan/Desktop/patchtool/Parser.h
 basic_structs.h
 /home/xwan/Desktop/patchtool/basic_structs.h
+BugMod.h
+/home/xwan/Desktop/patchtool/BugMod.h
 string
+-
+cstdio
 -
 
-/home/xwan/Desktop/patchtool/Parser.cpp
-Parser.h
-/home/xwan/Desktop/patchtool/Parser.h
+/home/xwan/Desktop/patchtool/BugMod.h
 string
 -
-iostream
--
+Parser.h
+/home/xwan/Desktop/patchtool/Parser.h
 
 /home/xwan/Desktop/patchtool/Parser.h
 string

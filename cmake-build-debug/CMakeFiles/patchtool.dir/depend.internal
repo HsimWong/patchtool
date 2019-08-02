@@ -3,6 +3,7 @@
 
 CMakeFiles/patchtool.dir/BugMod.cpp.o
  /home/xwan/Desktop/patchtool/BugMod.cpp
+ /home/xwan/Desktop/patchtool/BugMod.h
  /home/xwan/Desktop/patchtool/Parser.h
  /home/xwan/Desktop/patchtool/basic_structs.h
 CMakeFiles/patchtool.dir/Commit.cpp.o
