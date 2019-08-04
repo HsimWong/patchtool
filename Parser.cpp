@@ -5,6 +5,7 @@
 #include "Parser.h"
 #include <string>
 #include <iostream>
+#include <vector>
 
 #define INFTY 65535
 using namespace std;
@@ -33,7 +34,7 @@ Parser::Parser(string commit_hash) {
     this->cur_fin_num = 1;
     this->commit_hash = commit_hash;
     this->patch = *(new Patch);
-    this->patch.file_changes = *(new list<FileChange *>);
+    this->patch.file_changes = *(new vector<FileChange *>);
     this->patch.commit_hash = commit_hash;
     string cmd = "git diff " + commit_hash;
     string git_info = exec_cmd((cmd.c_str()));
@@ -44,7 +45,7 @@ Parser::Parser(string commit_hash1, string commit_hash2) {
     this->cur_ori_num = 1;
     this->cur_fin_num = 1;
     this->patch = *(new Patch);
-    this->patch.file_changes = *(new list<FileChange *>);
+    this->patch.file_changes = *(new vector<FileChange *>);
     this->commit_hash = commit_hash;
     this->patch.commit_hash = commit_hash;
     string cmd = "git diff " + commit_hash1 + " " + commit_hash2;
@@ -124,13 +125,28 @@ int parse_ident(string str, char * op, char * st, int *index) {
 }
 
 void Parser::Parse_patch_git_info(string str) {
-    char * op = new char[32];
-    char * st = new char[512];
+//    char * op = new char[8];
+//    char * st = new char[128];
     int op_code = INFTY;
     int start_ind = 0;
     while (start_ind != (str.length())) {
+        char * op = new char[8];
+        char * st = new char[128];
+        if (this->patch.file_changes.size() != 0) {
+            cout << this->patch.file_changes[this->patch.file_changes.size() - 1]->orig_dir << endl;
+
+        }
         op_code = parse_ident(str, op, st, &start_ind);
+        if (this->patch.file_changes.size() != 0) {
+            cout << this->patch.file_changes[this->patch.file_changes.size() - 1]->orig_dir << endl;
+
+//            cout << (*(this->patch.file_changes.rbegin()))->orig_dir << endl;
+        }
         this->deal_with_one_line(op_code, st);
+        if (this->patch.file_changes.size() != 0) {
+            cout << this->patch.file_changes[this->patch.file_changes.size() - 1]->orig_dir << endl;
+//            cout << (*(this->patch.file_changes.rbegin()))->orig_dir << endl;
+        }
     }
 }
 
@@ -140,12 +156,22 @@ void Parser::deal_with_one_line(int ident_id, char * st){
 
     if (ident_id == 1) {        // ---
         FileChange fc = {};
-        fc.linechanges = *(new list<LineChange *>);
-        fc.orig_dir = st;
+        fc.linechanges = *(new vector<LineChange *>);
+        vector<char *> lst = *(new vector<char *>);
+        lst.push_back("hello, world");
         this->patch.file_changes.push_back(&fc);
+        string tmp(st);
+        fc.orig_dir = tmp;
+//        this->patch.file_changes.push_back(&fc);
+        cout << "((this->patch.file_changes.size()))" << ((this->patch.file_changes.size())) << endl;
+        cout << (*(this->patch.file_changes.rbegin()))->orig_dir << endl;
+        fc.final_dir = "";
         return;
     } else if (ident_id == 0) { // +++
-        (*(this->patch.file_changes.rbegin()))->final_dir = st;
+        cout << (*(this->patch.file_changes.end())-1)->orig_dir << endl;
+        cout << (*(this->patch.file_changes.rbegin()))->final_dir << endl;
+        string tmp(st);
+        (*(this->patch.file_changes.rbegin()))->final_dir = tmp;
         return;
     } else if (ident_id == 2) { // +
         LineChange lc = *(new LineChange);
@@ -173,13 +199,14 @@ void Parser::deal_with_one_line(int ident_id, char * st){
         return;
     } else if (ident_id == 4) {  // ' '
         LineChange lc = *(new LineChange);
-        lc = {(*(this->patch.file_changes.rbegin()))->orig_dir,
-              (*(this->patch.file_changes.rbegin()))->final_dir,
-              this->cur_ori_num,
-              this->cur_fin_num,
-              -1,
-              st,
-              this->commit_hash};
+        lc.ori_file_dir = (*(this->patch.file_changes.rbegin()))->orig_dir;
+        lc.final_dir = (*(this->patch.file_changes.rbegin()))->final_dir;
+        lc.inserted_line_num = this->cur_ori_num;
+        lc.result_line_num = cur_fin_num;
+        lc.if_inserted = 0;
+        lc.line_content = st;
+        lc.commit_hash = this->commit_hash;
+
         this->cur_ori_num += 1;
         this->cur_fin_num += 1;
         (*(this->patch.file_changes.rbegin()))->linechanges.push_back(&lc);
@@ -187,7 +214,7 @@ void Parser::deal_with_one_line(int ident_id, char * st){
     } else {
         if (ident_id == 5) { // @@
             FileChange fc = *(new FileChange);
-            fc.linechanges = *(new list<LineChange *>);
+            fc.linechanges = *(new vector<LineChange *>);
             fc.orig_dir = (*(this->patch.file_changes.rbegin()))->orig_dir;
             this->parse_line_num(this->cur_ori_num, this->cur_fin_num, st);
         }

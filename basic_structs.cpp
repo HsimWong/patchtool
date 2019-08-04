@@ -9,9 +9,12 @@
 #include <array>
 #include <unistd.h>
 #include <bits/stdc++.h>
+#include <sstream>
 using namespace std;
 
-
+//string charToString(char * str) {
+//    string
+//}
 
 string exec_cmd(const char* cmd) {
     array<char, 128> buffer;

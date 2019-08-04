@@ -39,19 +39,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /home/xwan/Downloads/CLion-2019.2/clion-2019.2/bin/cmake/linux/bin/cmake
+CMAKE_COMMAND = /home/ryan/Downloads/clion-2019.2/bin/cmake/linux/bin/cmake
 
 # The command to remove a file.
-RM = /home/xwan/Downloads/CLion-2019.2/clion-2019.2/bin/cmake/linux/bin/cmake -E remove -f
+RM = /home/ryan/Downloads/clion-2019.2/bin/cmake/linux/bin/cmake -E remove -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/xwan/Desktop/patchtool
+CMAKE_SOURCE_DIR = /home/ryan/Desktop/patchtool
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/xwan/Desktop/patchtool/cmake-build-debug
+CMAKE_BINARY_DIR = /home/ryan/Desktop/patchtool/cmake-build-debug
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -59,7 +59,7 @@ CMAKE_BINARY_DIR = /home/xwan/Desktop/patchtool/cmake-build-debug
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/home/xwan/Downloads/CLion-2019.2/clion-2019.2/bin/cmake/linux/bin/cmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/home/ryan/Downloads/clion-2019.2/bin/cmake/linux/bin/cmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -70,7 +70,7 @@ rebuild_cache/fast: rebuild_cache
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/home/xwan/Downloads/CLion-2019.2/clion-2019.2/bin/cmake/linux/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+	/home/ryan/Downloads/clion-2019.2/bin/cmake/linux/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/xwan/Desktop/patchtool/cmake-build-debug/CMakeFiles /home/xwan/Desktop/patchtool/cmake-build-debug/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ryan/Desktop/patchtool/cmake-build-debug/CMakeFiles /home/ryan/Desktop/patchtool/cmake-build-debug/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/xwan/Desktop/patchtool/cmake-build-debug/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ryan/Desktop/patchtool/cmake-build-debug/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -150,33 +150,6 @@ BugMod.cpp.s:
 	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/BugMod.cpp.s
 .PHONY : BugMod.cpp.s
 
-Commit.o: Commit.cpp.o
-
-.PHONY : Commit.o
-
-# target to build an object file
-Commit.cpp.o:
-	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Commit.cpp.o
-.PHONY : Commit.cpp.o
-
-Commit.i: Commit.cpp.i
-
-.PHONY : Commit.i
-
-# target to preprocess a source file
-Commit.cpp.i:
-	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Commit.cpp.i
-.PHONY : Commit.cpp.i
-
-Commit.s: Commit.cpp.s
-
-.PHONY : Commit.s
-
-# target to generate assembly for a file
-Commit.cpp.s:
-	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/Commit.cpp.s
-.PHONY : Commit.cpp.s
-
 Parser.o: Parser.cpp.o
 
 .PHONY : Parser.o
@@ -231,33 +204,6 @@ basic_structs.cpp.s:
 	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/basic_structs.cpp.s
 .PHONY : basic_structs.cpp.s
 
-test.o: test.cpp.o
-
-.PHONY : test.o
-
-# target to build an object file
-test.cpp.o:
-	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/test.cpp.o
-.PHONY : test.cpp.o
-
-test.i: test.cpp.i
-
-.PHONY : test.i
-
-# target to preprocess a source file
-test.cpp.i:
-	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/test.cpp.i
-.PHONY : test.cpp.i
-
-test.s: test.cpp.s
-
-.PHONY : test.s
-
-# target to generate assembly for a file
-test.cpp.s:
-	$(MAKE) -f CMakeFiles/patchtool.dir/build.make CMakeFiles/patchtool.dir/test.cpp.s
-.PHONY : test.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -270,18 +216,12 @@ help:
 	@echo "... BugMod.o"
 	@echo "... BugMod.i"
 	@echo "... BugMod.s"
-	@echo "... Commit.o"
-	@echo "... Commit.i"
-	@echo "... Commit.s"
 	@echo "... Parser.o"
 	@echo "... Parser.i"
 	@echo "... Parser.s"
 	@echo "... basic_structs.o"
 	@echo "... basic_structs.i"
 	@echo "... basic_structs.s"
-	@echo "... test.o"
-	@echo "... test.i"
-	@echo "... test.s"
 .PHONY : help
 
 

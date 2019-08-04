@@ -2,6 +2,7 @@
 #define BASIC_STRUCTS_H
 #include <string>
 #include <list>
+#include <vector>
 using namespace std;
 
 struct LineChange {
@@ -17,17 +18,14 @@ struct LineChange {
 struct FileChange{
     string orig_dir;
     string final_dir;
-    list<LineChange *> linechanges;
+    vector<LineChange *> linechanges;
 };
 
 struct Patch {
     string commit_hash;
-    list<FileChange *> file_changes;
+    vector<FileChange *> file_changes;
 
 };
-
-
-
-int line_modified_above(LineChange * l, Patch * cmd);
+std::string toString(char * str);
 std::string exec_cmd(const char* cmd);
 #endif
