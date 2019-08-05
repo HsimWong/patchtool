@@ -2,7 +2,7 @@
 LineChange = (
     string ori_file_dir;
     string final_dir;
-    int inserted_line_num;      
+    int inserted_line_num;
 
    1 ori        +1 ist
    2 ori        +1 ist
@@ -31,7 +31,7 @@ import os
 now_commit_hash = ""
 bug_commit_hash = ""
 
-# from pygit2 import Repository as rp 
+# from pygit2 import Repository as rp
 INFINITY = 65535
 
 # repo = rp('./.git')
@@ -82,7 +82,7 @@ class Parser:
         else:
             return
         return
-    
+
     def parse_line(self, line):
         # print(line)
         if len(line) == 0:
@@ -98,16 +98,16 @@ class Parser:
         elif line[0] == ' ':
             return 4, line[1:]
         elif line[0] == '@':
-            return 5, line 
+            return 5, line
         else:
-            return INFINITY, line 
-    
+            return INFINITY, line
+
 
     def absorb_int(self,string):
         num = ""
         for char in string:
             if char.isdigit():
-                num += char 
+                num += char
             else:
                 break
         return int(num)
@@ -120,7 +120,7 @@ class Parser:
         return ori_num, mod_num
 
 
-    
+
 def if_dir_match(dir_1, dir_2):
     return (dir_1[1:] == dir_2[1:])
 
@@ -148,7 +148,7 @@ def display(pat_str_bug, pat_str_now):
             if if_dir_match(file_now[0], file[1]):
                 if_modified = True
                 print("File dir right now:\t\t%s"%file_now[1])
-        if not if_modified:        
+        if not if_modified:
             print("File dir right now:\t\t%s"%file[1])
         for line in file[2]:
             print("%d\t%d\t%d\t%s"%(line[2], line[3], get_new_line_num(line, patch_now), line[5]))
@@ -157,11 +157,13 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-b', type=str, required=True,help='Bug commit: The commit hash or version where the bug is solved.')
 parser.add_argument('-n', type=str, required=True,help='Check commit: The commit hash or version where the bug commit is displayed.')
+parser.add_argument('-d', type=str, required=True,help='git repository directory')
 args = parser.parse_args()
 bug_commit_hash = str(args.b)
 now_commit_hash = str(args.n)
+repo_dir = str(args.d)
 
 
-git_info_old = os.popen("git diff %s"%bug_commit_hash).read()
-git_info_now = os.popen("git diff %s %s"%(bug_commit_hash, now_commit_hash)).read()
+git_info_old = os.popen("cd %s && git diff %s"%(repo_dir,bug_commit_hash)).read()
+git_info_now = os.popen("cd %s && git diff %s %s"%(repo_dir, bug_commit_hash, now_commit_hash)).read()
 display(git_info_old,git_info_now)
