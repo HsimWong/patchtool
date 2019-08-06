@@ -17,7 +17,7 @@ Here I will simply list the packages on which the tool is implemented. It should
 
 --h, --help   show this help message and exit
 
--d          git directory *[not yet modified, wait until i get to the office]*
+-d          git directory 
 
 -b          Bug commit: The commit hash or version where the bug is solved.
 
@@ -51,3 +51,6 @@ ori	mod	now	exist	content
 8	14	15	True	aaaaaaaaaaaaaaa
 
 ```
+## Implementation in C++
+I also tried to parse the git info in c++ at the very beginning, but failed in segmentation fault
+Source codes are in cpp_history dir
