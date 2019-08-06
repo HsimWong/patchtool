@@ -19,10 +19,9 @@ Here I will simply list the packages on which the tool is implemented. It should
 
 -d          git directory 
 
--b          Bug commit: The commit hash or version where the bug is solved.
+-b          Bug commit: The commit hash or version where the bug is discovered.
 
--n          Check commit: The commit hash or version where the bug commit is
-displayed.
+-n          Check commit: The commit hash or version where the bug is solved.
 
 An ordinary usage goes like this:
 ```
