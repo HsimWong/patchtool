@@ -10,7 +10,8 @@ class OriParser(object):
     def __init__(self, diff_string, now_parse_git_info):
         self.patches = []
         self.parser_now = patchtool.Parser(now_parse_git_info)
-        self.parse_git_diff(diff_string)
+        self.out_str = self.parse_git_diff(diff_string)
+
 
     def parse_git_diff(self, diff_string):
         # pat_lines = []
@@ -25,23 +26,24 @@ class OriParser(object):
             if operator == 0: # +,-,' ',
                 # pat_lines.append(operator + content)
                 output_str += line
-                continue 
+                #continue 
             elif operator == 1: # @@
                 line_indicator = self.get_new_fake_line(line, \
                     self.parser_now, curr_ori_dir, curr_mod_dir)
                 output_str += line_indicator
-                continue 
+                #continue 
             elif operator == 2: # ---
                 curr_ori_dir = content
-                output_str += line_indicator
-                continue
+                output_str += line
+                #continue
             elif operator == 3:  # +++
                 curr_mod_dir = content
                 output_str += line 
-                continue
+                #continue
             else:
                 output_str += line 
-                continue 
+            output_str += '\n'
+                
         return output_str
 
     def parse_line(self, line):
