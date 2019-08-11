@@ -23,11 +23,14 @@ Here I will simply list the packages on which the tool is implemented. It should
 
 -n          Check commit: The commit hash or version where the bug is solved.
 
+-s          output style, [patch] for patch style, while [comp] for
+              comparison style
+
 An ordinary usage goes like this:
 ```
-python3 patchtool.py -d [directory] -b [bugHash] -n [displayHash]
+python3 main.py -d [directory] -b [bugHash] -n [displayHash] -s [style]
 ```
-A normal output will be:
+A normal comparison output will be:
 ```
 =============================================
 File dir when un-debugged:	a/cm1.txt
@@ -49,6 +52,36 @@ ori	mod	now	exist	content
 8	13	14	True	--------------
 8	14	15	True	aaaaaaaaaaaaaaa
 
+```
+
+
+A normal patch output will be:
+```
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..d3a28e9
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,53 @@
++# patchtool
++## Prerequisite
++
++Here I will simply list the packages on which the tool is implemented. It should be working fine with similar environment
++
++**OS**: Ubuntu 19.04
++
++**Interpreter**: 3.7.3
++
++**Version Controller**: git 2.20.1
++
++**Compiler**: gcc-8.3.0
++
++**Kernel**: 5.0.0-21
++
++## How to use
++
++--h, --help   show this help message and exit
+...
 ```
 ## Implementation in C++
 I also tried to parse the git info in c++ at the very beginning, but failed in segmentation fault
