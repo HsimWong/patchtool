@@ -1,0 +1,1911 @@
+From dd52444f231c205fb624fdeb59145722ba887aaa Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20P=2E=20Berrang=C3=A9?= <berrange@redhat.com>
+Date: Thu, 26 Jul 2018 11:37:32 +0100
+Subject: [PATCH 1/7] network: restrict usage of port management APIs
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The port allocation APIs are currently called unconditionally for all
+types of NIC, but (mostly) only do anything for NICs with type=network.
+
+The exception is the port allocate API which does some validation even
+for NICs with type!=network. Relying on this validation is flawed,
+however, since the network driver may not even be installed. IOW virt
+drivers must not delegate validation to the network driver for NICs
+with type != network.
+
+This change allows us to report errors when the virtual network driver
+is not registered.
+
+Reviewed-by: Cole Robinson <crobinso@redhat.com>
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+---
+ src/conf/domain_conf.c      | 26 ++++++++------
+ src/libxl/libxl_domain.c    |  6 ++--
+ src/libxl/libxl_driver.c    |  9 +++--
+ src/lxc/lxc_driver.c        |  6 ++--
+ src/lxc/lxc_process.c       |  9 +++--
+ src/network/bridge_driver.c | 72 +++++++++++++++++++------------------
+ src/qemu/qemu_driver.c      |  6 ++--
+ src/qemu/qemu_hotplug.c     | 17 +++++----
+ src/qemu/qemu_process.c     |  9 +++--
+ 9 files changed, 94 insertions(+), 66 deletions(-)
+
+diff --git a/src/conf/domain_conf.c b/src/conf/domain_conf.c
+index 17e8975be3..2520728493 100644
+--- a/src/conf/domain_conf.c
++++ b/src/conf/domain_conf.c
+@@ -30307,13 +30307,11 @@ int
+ virDomainNetAllocateActualDevice(virDomainDefPtr dom,
+                                  virDomainNetDefPtr iface)
+ {
+-    /* Just silently ignore if network driver isn't present. If something
+-     * has tried to use a NIC with type=network, other code will already
+-     * cause an error. This ensures type=bridge doesn't break when
+-     * network driver is compiled out.
+-     */
+-    if (!netAllocate)
+-        return 0;
++    if (!netAllocate) {
++        virReportError(VIR_ERR_NO_SUPPORT, "%s",
++                       _("Virtual networking driver is not available"));
++        return -1;
++    }
+ 
+     return netAllocate(dom, iface);
+ }
+@@ -30343,8 +30341,11 @@ bool
+ virDomainNetBandwidthChangeAllowed(virDomainNetDefPtr iface,
+                                    virNetDevBandwidthPtr newBandwidth)
+ {
+-    if (!netBandwidthChangeAllowed)
+-        return 0;
++    if (!netBandwidthChangeAllowed) {
++        virReportError(VIR_ERR_NO_SUPPORT, "%s",
++                       _("Virtual networking driver is not available"));
++        return -1;
++    }
+ 
+     return netBandwidthChangeAllowed(iface, newBandwidth);
+ }
+@@ -30353,8 +30354,11 @@ int
+ virDomainNetBandwidthUpdate(virDomainNetDefPtr iface,
+                             virNetDevBandwidthPtr newBandwidth)
+ {
+-    if (!netBandwidthUpdate)
+-        return 0;
++    if (!netBandwidthUpdate) {
++        virReportError(VIR_ERR_NO_SUPPORT, "%s",
++                       _("Virtual networking driver is not available"));
++        return -1;
++    }
+ 
+     return netBandwidthUpdate(iface, newBandwidth);
+ }
+diff --git a/src/libxl/libxl_domain.c b/src/libxl/libxl_domain.c
+index 6e4bf68921..adc6d6d104 100644
+--- a/src/libxl/libxl_domain.c
++++ b/src/libxl/libxl_domain.c
+@@ -904,7 +904,8 @@ libxlDomainCleanup(libxlDriverPrivatePtr driver,
+ 
+             /* cleanup actual device */
+             virDomainNetRemoveHostdev(vm->def, net);
+-            virDomainNetReleaseActualDevice(vm->def, net);
++            if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++                virDomainNetReleaseActualDevice(vm->def, net);
+         }
+     }
+ 
+@@ -1061,7 +1062,8 @@ libxlNetworkPrepareDevices(virDomainDefPtr def)
+          * network's pool of devices, or resolve bridge device name
+          * to the one defined in the network definition.
+          */
+-        if (virDomainNetAllocateActualDevice(def, net) < 0)
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
++            virDomainNetAllocateActualDevice(def, net) < 0)
+             return -1;
+ 
+         actualType = virDomainNetGetActualType(net);
+diff --git a/src/libxl/libxl_driver.c b/src/libxl/libxl_driver.c
+index a9edc8211d..d5cd3fc834 100644
+--- a/src/libxl/libxl_driver.c
++++ b/src/libxl/libxl_driver.c
+@@ -3390,7 +3390,8 @@ libxlDomainAttachNetDevice(libxlDriverPrivatePtr driver,
+      * network's pool of devices, or resolve bridge device name
+      * to the one defined in the network definition.
+      */
+-    if (virDomainNetAllocateActualDevice(vm->def, net) < 0)
++    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
++        virDomainNetAllocateActualDevice(vm->def, net) < 0)
+         goto cleanup;
+ 
+     actualType = virDomainNetGetActualType(net);
+@@ -3440,7 +3441,8 @@ libxlDomainAttachNetDevice(libxlDriverPrivatePtr driver,
+         vm->def->nets[vm->def->nnets++] = net;
+     } else {
+         virDomainNetRemoveHostdev(vm->def, net);
+-        virDomainNetReleaseActualDevice(vm->def, net);
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++            virDomainNetReleaseActualDevice(vm->def, net);
+     }
+     virObjectUnref(cfg);
+     return ret;
+@@ -3863,7 +3865,8 @@ libxlDomainDetachNetDevice(libxlDriverPrivatePtr driver,
+  cleanup:
+     libxl_device_nic_dispose(&nic);
+     if (!ret) {
+-        virDomainNetReleaseActualDevice(vm->def, detach);
++        if (detach->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++            virDomainNetReleaseActualDevice(vm->def, detach);
+         virDomainNetRemove(vm->def, detachidx);
+     }
+     virObjectUnref(cfg);
+diff --git a/src/lxc/lxc_driver.c b/src/lxc/lxc_driver.c
+index e981f8e901..027c4fd990 100644
+--- a/src/lxc/lxc_driver.c
++++ b/src/lxc/lxc_driver.c
+@@ -3834,7 +3834,8 @@ lxcDomainAttachDeviceNetLive(virConnectPtr conn,
+      * network's pool of devices, or resolve bridge device name
+      * to the one defined in the network definition.
+      */
+-    if (virDomainNetAllocateActualDevice(vm->def, net) < 0)
++    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
++        virDomainNetAllocateActualDevice(vm->def, net) < 0)
+         return -1;
+ 
+     actualType = virDomainNetGetActualType(net);
+@@ -4388,7 +4389,8 @@ lxcDomainDetachDeviceNetLive(virDomainObjPtr vm,
+     ret = 0;
+  cleanup:
+     if (!ret) {
+-        virDomainNetReleaseActualDevice(vm->def, detach);
++        if (detach->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++            virDomainNetReleaseActualDevice(vm->def, detach);
+         virDomainNetRemove(vm->def, detachidx);
+         virDomainNetDefFree(detach);
+     }
+diff --git a/src/lxc/lxc_process.c b/src/lxc/lxc_process.c
+index e0729a24bf..7849aaf5b9 100644
+--- a/src/lxc/lxc_process.c
++++ b/src/lxc/lxc_process.c
+@@ -224,7 +224,8 @@ static void virLXCProcessCleanup(virLXCDriverPtr driver,
+                                 iface->ifname));
+             ignore_value(virNetDevVethDelete(iface->ifname));
+         }
+-        virDomainNetReleaseActualDevice(vm->def, iface);
++        if (iface->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++            virDomainNetReleaseActualDevice(vm->def, iface);
+     }
+ 
+     virDomainConfVMNWFilterTeardown(vm);
+@@ -558,7 +559,8 @@ static int virLXCProcessSetupInterfaces(virConnectPtr conn,
+         if (virLXCProcessValidateInterface(net) < 0)
+             goto cleanup;
+ 
+-        if (virDomainNetAllocateActualDevice(def, net) < 0)
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
++            virDomainNetAllocateActualDevice(def, net) < 0)
+             goto cleanup;
+ 
+         type = virDomainNetGetActualType(net);
+@@ -637,7 +639,8 @@ static int virLXCProcessSetupInterfaces(virConnectPtr conn,
+                 ignore_value(virNetDevOpenvswitchRemovePort(
+                                 virDomainNetGetActualBridgeName(iface),
+                                 iface->ifname));
+-            virDomainNetReleaseActualDevice(def, iface);
++            if (iface->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++                virDomainNetReleaseActualDevice(def, iface);
+         }
+     }
+     return ret;
+diff --git a/src/network/bridge_driver.c b/src/network/bridge_driver.c
+index a091ed7181..cf1abe6bb2 100644
+--- a/src/network/bridge_driver.c
++++ b/src/network/bridge_driver.c
+@@ -4391,8 +4391,11 @@ networkAllocateActualDevice(virDomainDefPtr dom,
+     size_t i;
+     int ret = -1;
+ 
+-    if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK)
+-        goto validate;
++    if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK) {
++        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
++                       _("Expected an interface for a virtual network"));
++        goto error;
++    }
+ 
+     virDomainActualNetDefFree(iface->data.network.actual);
+     iface->data.network.actual = NULL;
+@@ -4711,7 +4714,6 @@ networkAllocateActualDevice(virDomainDefPtr dom,
+     if (virNetDevVPortProfileCheckComplete(virtport, true) < 0)
+         goto error;
+ 
+- validate:
+     /* make sure that everything now specified for the device is
+      * actually supported on this type of network. NB: network,
+      * netdev, and iface->data.network.actual may all be NULL.
+@@ -4730,19 +4732,11 @@ networkAllocateActualDevice(virDomainDefPtr dom,
+               (actualType == VIR_DOMAIN_NET_TYPE_BRIDGE &&
+                virtport && virtport->virtPortType
+                == VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH))) {
+-            if (netdef) {
+-                virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
+-                               _("an interface connecting to network '%s' "
+-                                 "is requesting a vlan tag, but that is not "
+-                                 "supported for this type of network"),
+-                               netdef->name);
+-            } else {
+-                virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
+-                               _("an interface of type '%s' "
+-                                 "is requesting a vlan tag, but that is not "
+-                                 "supported for this type of connection"),
+-                               virDomainNetTypeToString(iface->type));
+-            }
++            virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
++                           _("an interface connecting to network '%s' "
++                             "is requesting a vlan tag, but that is not "
++                             "supported for this type of network"),
++                           netdef->name);
+             goto error;
+         }
+     }
+@@ -4758,22 +4752,20 @@ networkAllocateActualDevice(virDomainDefPtr dom,
+         }
+     }
+ 
+-    if (netdef) {
+-        netdef->connections++;
++    netdef->connections++;
++    if (dev)
++        dev->connections++;
++    /* finally we can call the 'plugged' hook script if any */
++    if (networkRunHook(obj, dom, iface,
++                       VIR_HOOK_NETWORK_OP_IFACE_PLUGGED,
++                       VIR_HOOK_SUBOP_BEGIN) < 0) {
++        /* adjust for failure */
++        netdef->connections--;
+         if (dev)
+-            dev->connections++;
+-        /* finally we can call the 'plugged' hook script if any */
+-        if (networkRunHook(obj, dom, iface,
+-                           VIR_HOOK_NETWORK_OP_IFACE_PLUGGED,
+-                           VIR_HOOK_SUBOP_BEGIN) < 0) {
+-            /* adjust for failure */
+-            netdef->connections--;
+-            if (dev)
+-                dev->connections--;
+-            goto error;
+-        }
+-        networkLogAllocation(netdef, actualType, dev, iface, true);
++            dev->connections--;
++        goto error;
+     }
++    networkLogAllocation(netdef, actualType, dev, iface, true);
+ 
+     ret = 0;
+ 
+@@ -4814,8 +4806,11 @@ networkNotifyActualDevice(virDomainDefPtr dom,
+     size_t i;
+     char *master = NULL;
+ 
+-    if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK)
+-        return;
++    if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK) {
++        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
++                       _("Expected an interface for a virtual network"));
++        goto error;
++    }
+ 
+     obj = virNetworkObjFindByName(driver->networks, iface->data.network.name);
+     if (!obj) {
+@@ -5047,8 +5042,11 @@ networkReleaseActualDevice(virDomainDefPtr dom,
+     size_t i;
+     int ret = -1;
+ 
+-    if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK)
+-        return 0;
++    if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK) {
++        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
++                       _("Expected an interface for a virtual network"));
++        goto error;
++    }
+ 
+     obj = virNetworkObjFindByName(driver->networks, iface->data.network.name);
+     if (!obj) {
+@@ -5539,6 +5537,12 @@ networkBandwidthUpdate(virDomainNetDefPtr iface,
+     int plug_ret;
+     int ret = -1;
+ 
++    if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK) {
++        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
++                       _("Expected an interface for a virtual network"));
++        return -1;
++    }
++
+     if (!networkBandwidthGenericChecks(iface, newBandwidth))
+         return 0;
+ 
+diff --git a/src/qemu/qemu_driver.c b/src/qemu/qemu_driver.c
+index 4510b0ce60..811762f307 100644
+--- a/src/qemu/qemu_driver.c
++++ b/src/qemu/qemu_driver.c
+@@ -11623,12 +11623,14 @@ qemuDomainSetInterfaceParameters(virDomainPtr dom,
+                    sizeof(*newBandwidth->out));
+         }
+ 
+-        if (!virDomainNetBandwidthChangeAllowed(net, newBandwidth))
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
++            !virDomainNetBandwidthChangeAllowed(net, newBandwidth))
+             goto endjob;
+ 
+         if (virNetDevBandwidthSet(net->ifname, newBandwidth, false,
+                                   !virDomainNetTypeSharesHostView(net)) < 0 ||
+-            virDomainNetBandwidthUpdate(net, newBandwidth) < 0) {
++            (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
++             virDomainNetBandwidthUpdate(net, newBandwidth) < 0)) {
+             ignore_value(virNetDevBandwidthSet(net->ifname,
+                                                net->bandwidth,
+                                                false,
+diff --git a/src/qemu/qemu_hotplug.c b/src/qemu/qemu_hotplug.c
+index ef14b1977c..48489d3cdc 100644
+--- a/src/qemu/qemu_hotplug.c
++++ b/src/qemu/qemu_hotplug.c
+@@ -1385,7 +1385,8 @@ qemuDomainAttachNetDevice(virQEMUDriverPtr driver,
+      * network's pool of devices, or resolve bridge device name
+      * to the one defined in the network definition.
+      */
+-    if (virDomainNetAllocateActualDevice(vm->def, net) < 0)
++    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
++        virDomainNetAllocateActualDevice(vm->def, net) < 0)
+         goto cleanup;
+ 
+     actualType = virDomainNetGetActualType(net);
+@@ -1689,7 +1690,8 @@ qemuDomainAttachNetDevice(virQEMUDriverPtr driver,
+ 
+         virDomainNetRemoveHostdev(vm->def, net);
+ 
+-        virDomainNetReleaseActualDevice(vm->def, net);
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++            virDomainNetReleaseActualDevice(vm->def, net);
+     }
+ 
+     VIR_FREE(nicstr);
+@@ -4126,7 +4128,8 @@ qemuDomainChangeNet(virQEMUDriverPtr driver,
+ 
+         /* this function doesn't work with HOSTDEV networks yet, thus
+          * no need to change the pointer in the hostdev structure */
+-        virDomainNetReleaseActualDevice(vm->def, olddev);
++        if (olddev->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++            virDomainNetReleaseActualDevice(vm->def, olddev);
+         virDomainNetDefFree(olddev);
+         /* move newdev into the nets list, and NULL it out from the
+          * virDomainDeviceDef that we were given so that the caller
+@@ -4157,7 +4160,7 @@ qemuDomainChangeNet(virQEMUDriverPtr driver,
+      * that the changes were minor enough that we didn't need to
+      * replace the entire device object.
+      */
+-    if (newdev)
++    if (newdev && newdev->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+         virDomainNetReleaseActualDevice(vm->def, newdev);
+ 
+     return ret;
+@@ -4750,7 +4753,8 @@ qemuDomainRemoveHostDevice(virQEMUDriverPtr driver,
+     virDomainHostdevDefFree(hostdev);
+ 
+     if (net) {
+-        virDomainNetReleaseActualDevice(vm->def, net);
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++            virDomainNetReleaseActualDevice(vm->def, net);
+         virDomainNetDefFree(net);
+     }
+ 
+@@ -4852,7 +4856,8 @@ qemuDomainRemoveNetDevice(virQEMUDriverPtr driver,
+ 
+     qemuDomainNetDeviceVportRemove(net);
+ 
+-    virDomainNetReleaseActualDevice(vm->def, net);
++    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++        virDomainNetReleaseActualDevice(vm->def, net);
+     virDomainNetDefFree(net);
+     ret = 0;
+ 
+diff --git a/src/qemu/qemu_process.c b/src/qemu/qemu_process.c
+index 55f4074ea1..8b0ae901e9 100644
+--- a/src/qemu/qemu_process.c
++++ b/src/qemu/qemu_process.c
+@@ -3288,7 +3288,8 @@ qemuProcessNotifyNets(virDomainDefPtr def)
+         if (virDomainNetGetActualType(net) == VIR_DOMAIN_NET_TYPE_DIRECT)
+            ignore_value(virNetDevMacVLanReserveName(net->ifname, false));
+ 
+-        virDomainNetNotifyActualDevice(def, net);
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++            virDomainNetNotifyActualDevice(def, net);
+     }
+ }
+ 
+@@ -5474,7 +5475,8 @@ qemuProcessNetworkPrepareDevices(virDomainDefPtr def)
+          * network's pool of devices, or resolve bridge device name
+          * to the one defined in the network definition.
+          */
+-        if (virDomainNetAllocateActualDevice(def, net) < 0)
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
++            virDomainNetAllocateActualDevice(def, net) < 0)
+             goto cleanup;
+ 
+         actualType = virDomainNetGetActualType(net);
+@@ -7321,7 +7323,8 @@ void qemuProcessStop(virQEMUDriverPtr driver,
+ 
+         /* kick the device out of the hostdev list too */
+         virDomainNetRemoveHostdev(def, net);
+-        virDomainNetReleaseActualDevice(vm->def, net);
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
++            virDomainNetReleaseActualDevice(vm->def, net);
+     }
+ 
+  retry:
+-- 
+2.18.1
+
+From e1d10f8ef214e241e7aaf5d2177bd4c7b61a175f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20P=2E=20Berrang=C3=A9?= <berrange@redhat.com>
+Date: Thu, 26 Jul 2018 15:32:04 +0100
+Subject: [PATCH 2/7] network: pass a virNetworkPtr to port management APIs
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The APIs for allocating/notifying/removing network ports just take
+an internal domain interface struct right now. As a step towards
+turning these into public facing APIs, add a virNetworkPtr argument
+to all of them.
+
+Reviewed-by: Cole Robinson <crobinso@redhat.com>
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+---
+ src/conf/domain_conf.c      | 40 +++++++++++++++++++----
+ src/conf/domain_conf.h      | 18 +++++++----
+ src/libxl/libxl_domain.c    | 30 +++++++++++++-----
+ src/libxl/libxl_driver.c    | 26 ++++++++++-----
+ src/lxc/lxc_driver.c        | 24 +++++++++++---
+ src/lxc/lxc_process.c       | 25 ++++++++++-----
+ src/network/bridge_driver.c | 54 +++++++++++++++++--------------
+ src/qemu/qemu_hotplug.c     | 63 +++++++++++++++++++++++++++----------
+ src/qemu/qemu_process.c     | 31 +++++++++++++-----
+ 9 files changed, 226 insertions(+), 85 deletions(-)
+
+diff --git a/src/conf/domain_conf.c b/src/conf/domain_conf.c
+index 2520728493..025cc4a994 100644
+--- a/src/conf/domain_conf.c
++++ b/src/conf/domain_conf.c
+@@ -30304,37 +30304,65 @@ virDomainNetSetDeviceImpl(virDomainNetAllocateActualDeviceImpl allocate,
+ }
+ 
+ int
+-virDomainNetAllocateActualDevice(virDomainDefPtr dom,
++virDomainNetAllocateActualDevice(virConnectPtr conn,
++                                 virDomainDefPtr dom,
+                                  virDomainNetDefPtr iface)
+ {
++    virNetworkPtr net = NULL;
++    int ret = -1;
++
+     if (!netAllocate) {
+         virReportError(VIR_ERR_NO_SUPPORT, "%s",
+                        _("Virtual networking driver is not available"));
+         return -1;
+     }
+ 
+-    return netAllocate(dom, iface);
++    if (!(net = virNetworkLookupByName(conn, iface->data.network.name)))
++        return -1;
++
++    ret = netAllocate(net, dom, iface);
++
++    virObjectUnref(net);
++    return ret;
+ }
+ 
+ void
+-virDomainNetNotifyActualDevice(virDomainDefPtr dom,
++virDomainNetNotifyActualDevice(virConnectPtr conn,
++                               virDomainDefPtr dom,
+                                virDomainNetDefPtr iface)
+ {
++    virNetworkPtr net = NULL;
++
+     if (!netNotify)
+         return;
+ 
+-    netNotify(dom, iface);
++    if (!(net = virNetworkLookupByName(conn, iface->data.network.name)))
++        return;
++
++    netNotify(net, dom, iface);
++
++    virObjectUnref(net);
+ }
+ 
+ 
+ int
+-virDomainNetReleaseActualDevice(virDomainDefPtr dom,
++virDomainNetReleaseActualDevice(virConnectPtr conn,
++                                virDomainDefPtr dom,
+                                 virDomainNetDefPtr iface)
+ {
++    virNetworkPtr net = NULL;
++    int ret;
++
+     if (!netRelease)
+         return 0;
+ 
+-    return netRelease(dom, iface);
++    if (!(net = virNetworkLookupByName(conn, iface->data.network.name)))
++        return -1;
++
++    ret = netRelease(net, dom, iface);
++
++    virObjectUnref(net);
++    return ret;
+ }
+ 
+ bool
+diff --git a/src/conf/domain_conf.h b/src/conf/domain_conf.h
+index 988ef90f11..8ef6d507b8 100644
+--- a/src/conf/domain_conf.h
++++ b/src/conf/domain_conf.h
+@@ -3502,15 +3502,18 @@ virDomainDefLifecycleActionAllowed(virDomainLifecycle type,
+                                    virDomainLifecycleAction action);
+ 
+ typedef int
+-(*virDomainNetAllocateActualDeviceImpl)(virDomainDefPtr dom,
++(*virDomainNetAllocateActualDeviceImpl)(virNetworkPtr net,
++                                        virDomainDefPtr dom,
+                                         virDomainNetDefPtr iface);
+ 
+ typedef void
+-(*virDomainNetNotifyActualDeviceImpl)(virDomainDefPtr dom,
++(*virDomainNetNotifyActualDeviceImpl)(virNetworkPtr net,
++                                      virDomainDefPtr dom,
+                                       virDomainNetDefPtr iface);
+ 
+ typedef int
+-(*virDomainNetReleaseActualDeviceImpl)(virDomainDefPtr dom,
++(*virDomainNetReleaseActualDeviceImpl)(virNetworkPtr net,
++                                       virDomainDefPtr dom,
+                                        virDomainNetDefPtr iface);
+ 
+ typedef bool
+@@ -3530,17 +3533,20 @@ virDomainNetSetDeviceImpl(virDomainNetAllocateActualDeviceImpl allocate,
+                           virDomainNetBandwidthUpdateImpl bandwidthUpdate);
+ 
+ int
+-virDomainNetAllocateActualDevice(virDomainDefPtr dom,
++virDomainNetAllocateActualDevice(virConnectPtr conn,
++                                 virDomainDefPtr dom,
+                                  virDomainNetDefPtr iface)
+     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2);
+ 
+ void
+-virDomainNetNotifyActualDevice(virDomainDefPtr dom,
++virDomainNetNotifyActualDevice(virConnectPtr conn,
++                               virDomainDefPtr dom,
+                                virDomainNetDefPtr iface)
+     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2);
+ 
+ int
+-virDomainNetReleaseActualDevice(virDomainDefPtr dom,
++virDomainNetReleaseActualDevice(virConnectPtr conn,
++                                virDomainDefPtr dom,
+                                 virDomainNetDefPtr iface)
+     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2);
+ 
+diff --git a/src/libxl/libxl_domain.c b/src/libxl/libxl_domain.c
+index adc6d6d104..f9ab06b916 100644
+--- a/src/libxl/libxl_domain.c
++++ b/src/libxl/libxl_domain.c
+@@ -35,6 +35,7 @@
+ #include "virtime.h"
+ #include "locking/domain_lock.h"
+ #include "xen_common.h"
++#include "driver.h"
+ 
+ #define VIR_FROM_THIS VIR_FROM_LIBXL
+ 
+@@ -845,6 +846,7 @@ libxlDomainCleanup(libxlDriverPrivatePtr driver,
+     char *file;
+     virHostdevManagerPtr hostdev_mgr = driver->hostdevMgr;
+     unsigned int hostdev_flags = VIR_HOSTDEV_SP_PCI;
++    virConnectPtr conn = NULL;
+ 
+ #ifdef LIBXL_HAVE_PVUSB
+     hostdev_flags |= VIR_HOSTDEV_SP_USB;
+@@ -904,8 +906,12 @@ libxlDomainCleanup(libxlDriverPrivatePtr driver,
+ 
+             /* cleanup actual device */
+             virDomainNetRemoveHostdev(vm->def, net);
+-            if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-                virDomainNetReleaseActualDevice(vm->def, net);
++            if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++                if (conn || (conn = virGetConnectNetwork()))
++                    virDomainNetReleaseActualDevice(conn, vm->def, net);
++                else
++                    VIR_WARN("Unable to release network device '%s'", NULLSTR(net->ifname));
++            }
+         }
+     }
+ 
+@@ -928,6 +934,7 @@ libxlDomainCleanup(libxlDriverPrivatePtr driver,
+ 
+     virDomainObjRemoveTransientDef(vm);
+     virObjectUnref(cfg);
++    virObjectUnref(conn);
+ }
+ 
+ /*
+@@ -1053,6 +1060,8 @@ static int
+ libxlNetworkPrepareDevices(virDomainDefPtr def)
+ {
+     size_t i;
++    virConnectPtr conn = NULL;
++    int ret = -1;
+ 
+     for (i = 0; i < def->nnets; i++) {
+         virDomainNetDefPtr net = def->nets[i];
+@@ -1062,9 +1071,12 @@ libxlNetworkPrepareDevices(virDomainDefPtr def)
+          * network's pool of devices, or resolve bridge device name
+          * to the one defined in the network definition.
+          */
+-        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
+-            virDomainNetAllocateActualDevice(def, net) < 0)
+-            return -1;
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++            if (!conn && !(conn = virGetConnectNetwork()))
++                goto cleanup;
++            if (virDomainNetAllocateActualDevice(conn, def, net) < 0)
++                goto cleanup;
++        }
+ 
+         actualType = virDomainNetGetActualType(net);
+         if (actualType == VIR_DOMAIN_NET_TYPE_HOSTDEV &&
+@@ -1084,10 +1096,14 @@ libxlNetworkPrepareDevices(virDomainDefPtr def)
+                 pcisrc->backend = VIR_DOMAIN_HOSTDEV_PCI_BACKEND_XEN;
+ 
+             if (virDomainHostdevInsert(def, hostdev) < 0)
+-                return -1;
++                goto cleanup;
+         }
+     }
+-    return 0;
++
++    ret = 0;
++ cleanup:
++    virObjectUnref(conn);
++    return ret;
+ }
+ 
+ static void
+diff --git a/src/libxl/libxl_driver.c b/src/libxl/libxl_driver.c
+index d5cd3fc834..506dcdfbeb 100644
+--- a/src/libxl/libxl_driver.c
++++ b/src/libxl/libxl_driver.c
+@@ -3379,6 +3379,7 @@ libxlDomainAttachNetDevice(libxlDriverPrivatePtr driver,
+     libxl_device_nic nic;
+     int ret = -1;
+     char mac[VIR_MAC_STRING_BUFLEN];
++    virConnectPtr conn = NULL;
+ 
+     libxl_device_nic_init(&nic);
+ 
+@@ -3390,9 +3391,12 @@ libxlDomainAttachNetDevice(libxlDriverPrivatePtr driver,
+      * network's pool of devices, or resolve bridge device name
+      * to the one defined in the network definition.
+      */
+-    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
+-        virDomainNetAllocateActualDevice(vm->def, net) < 0)
+-        goto cleanup;
++    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++        if (!(conn = virGetConnectNetwork()))
++            goto cleanup;
++        if (virDomainNetAllocateActualDevice(conn, vm->def, net) < 0)
++            goto cleanup;
++    }
+ 
+     actualType = virDomainNetGetActualType(net);
+ 
+@@ -3441,9 +3445,10 @@ libxlDomainAttachNetDevice(libxlDriverPrivatePtr driver,
+         vm->def->nets[vm->def->nnets++] = net;
+     } else {
+         virDomainNetRemoveHostdev(vm->def, net);
+-        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-            virDomainNetReleaseActualDevice(vm->def, net);
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK && conn)
++            virDomainNetReleaseActualDevice(conn, vm->def, net);
+     }
++    virObjectUnref(conn);
+     virObjectUnref(cfg);
+     return ret;
+ }
+@@ -3865,8 +3870,15 @@ libxlDomainDetachNetDevice(libxlDriverPrivatePtr driver,
+  cleanup:
+     libxl_device_nic_dispose(&nic);
+     if (!ret) {
+-        if (detach->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-            virDomainNetReleaseActualDevice(vm->def, detach);
++        if (detach->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++            virConnectPtr conn = virGetConnectNetwork();
++            if (conn) {
++                virDomainNetReleaseActualDevice(conn, vm->def, detach);
++                virObjectUnref(conn);
++            } else {
++                VIR_WARN("Unable to release network device '%s'", NULLSTR(detach->ifname));
++            }
++        }
+         virDomainNetRemove(vm->def, detachidx);
+     }
+     virObjectUnref(cfg);
+diff --git a/src/lxc/lxc_driver.c b/src/lxc/lxc_driver.c
+index 027c4fd990..a184e67e15 100644
+--- a/src/lxc/lxc_driver.c
++++ b/src/lxc/lxc_driver.c
+@@ -3834,9 +3834,16 @@ lxcDomainAttachDeviceNetLive(virConnectPtr conn,
+      * network's pool of devices, or resolve bridge device name
+      * to the one defined in the network definition.
+      */
+-    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
+-        virDomainNetAllocateActualDevice(vm->def, net) < 0)
+-        return -1;
++    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++        virConnectPtr netconn = virGetConnectNetwork();
++        if (!netconn)
++            return -1;
++        if (virDomainNetAllocateActualDevice(netconn, vm->def, net) < 0) {
++            virObjectUnref(netconn);
++            return -1;
++        }
++        virObjectUnref(netconn);
++    }
+ 
+     actualType = virDomainNetGetActualType(net);
+ 
+@@ -4389,8 +4396,15 @@ lxcDomainDetachDeviceNetLive(virDomainObjPtr vm,
+     ret = 0;
+  cleanup:
+     if (!ret) {
+-        if (detach->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-            virDomainNetReleaseActualDevice(vm->def, detach);
++        if (detach->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++            virConnectPtr conn = virGetConnectNetwork();
++            if (conn) {
++                virDomainNetReleaseActualDevice(conn, vm->def, detach);
++                virObjectUnref(conn);
++            } else {
++                VIR_WARN("Unable to release network device '%s'", NULLSTR(detach->ifname));
++            }
++        }
+         virDomainNetRemove(vm->def, detachidx);
+         virDomainNetDefFree(detach);
+     }
+diff --git a/src/lxc/lxc_process.c b/src/lxc/lxc_process.c
+index 7849aaf5b9..3a33418aca 100644
+--- a/src/lxc/lxc_process.c
++++ b/src/lxc/lxc_process.c
+@@ -165,6 +165,7 @@ static void virLXCProcessCleanup(virLXCDriverPtr driver,
+     virLXCDomainObjPrivatePtr priv = vm->privateData;
+     virNetDevVPortProfilePtr vport = NULL;
+     virLXCDriverConfigPtr cfg = virLXCDriverGetConfig(driver);
++    virConnectPtr conn = NULL;
+ 
+     VIR_DEBUG("Cleanup VM name=%s pid=%d reason=%d",
+               vm->def->name, (int)vm->pid, (int)reason);
+@@ -224,8 +225,12 @@ static void virLXCProcessCleanup(virLXCDriverPtr driver,
+                                 iface->ifname));
+             ignore_value(virNetDevVethDelete(iface->ifname));
+         }
+-        if (iface->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-            virDomainNetReleaseActualDevice(vm->def, iface);
++        if (iface->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++            if (conn || (conn = virGetConnectNetwork()))
++                virDomainNetReleaseActualDevice(conn, vm->def, iface);
++            else
++                VIR_WARN("Unable to release network device '%s'", NULLSTR(iface->ifname));
++        }
+     }
+ 
+     virDomainConfVMNWFilterTeardown(vm);
+@@ -255,6 +260,7 @@ static void virLXCProcessCleanup(virLXCDriverPtr driver,
+ 
+     virDomainObjRemoveTransientDef(vm);
+     virObjectUnref(cfg);
++    virObjectUnref(conn);
+ }
+ 
+ 
+@@ -543,6 +549,7 @@ static int virLXCProcessSetupInterfaces(virConnectPtr conn,
+     size_t niface = 0;
+     virDomainNetDefPtr net;
+     virDomainNetType type;
++    virConnectPtr netconn = NULL;
+ 
+     if (VIR_ALLOC_N(*veths, def->nnets + 1) < 0)
+         return -1;
+@@ -559,9 +566,12 @@ static int virLXCProcessSetupInterfaces(virConnectPtr conn,
+         if (virLXCProcessValidateInterface(net) < 0)
+             goto cleanup;
+ 
+-        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
+-            virDomainNetAllocateActualDevice(def, net) < 0)
+-            goto cleanup;
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++            if (!netconn && !(netconn = virGetConnectNetwork()))
++                goto cleanup;
++            if (virDomainNetAllocateActualDevice(netconn, def, net) < 0)
++                goto cleanup;
++        }
+ 
+         type = virDomainNetGetActualType(net);
+         switch (type) {
+@@ -639,10 +649,11 @@ static int virLXCProcessSetupInterfaces(virConnectPtr conn,
+                 ignore_value(virNetDevOpenvswitchRemovePort(
+                                 virDomainNetGetActualBridgeName(iface),
+                                 iface->ifname));
+-            if (iface->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-                virDomainNetReleaseActualDevice(def, iface);
++            if (iface->type == VIR_DOMAIN_NET_TYPE_NETWORK && netconn)
++                virDomainNetReleaseActualDevice(netconn, def, iface);
+         }
+     }
++    virObjectUnref(netconn);
+     return ret;
+ }
+ 
+diff --git a/src/network/bridge_driver.c b/src/network/bridge_driver.c
+index cf1abe6bb2..bcc2bb5b3e 100644
+--- a/src/network/bridge_driver.c
++++ b/src/network/bridge_driver.c
+@@ -4376,7 +4376,8 @@ networkLogAllocation(virNetworkDefPtr netdef,
+  * Returns 0 on success, -1 on failure.
+  */
+ static int
+-networkAllocateActualDevice(virDomainDefPtr dom,
++networkAllocateActualDevice(virNetworkPtr net,
++                            virDomainDefPtr dom,
+                             virDomainNetDefPtr iface)
+ {
+     virNetworkDriverStatePtr driver = networkGetDriver();
+@@ -4391,6 +4392,14 @@ networkAllocateActualDevice(virDomainDefPtr dom,
+     size_t i;
+     int ret = -1;
+ 
++    obj = virNetworkObjFindByName(driver->networks, net->name);
++    if (!obj) {
++        virReportError(VIR_ERR_NO_NETWORK,
++                       _("no network with matching name '%s'"),
++                       net->name);
++        goto error;
++    }
++
+     if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK) {
+         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                        _("Expected an interface for a virtual network"));
+@@ -4400,13 +4409,6 @@ networkAllocateActualDevice(virDomainDefPtr dom,
+     virDomainActualNetDefFree(iface->data.network.actual);
+     iface->data.network.actual = NULL;
+ 
+-    obj = virNetworkObjFindByName(driver->networks, iface->data.network.name);
+-    if (!obj) {
+-        virReportError(VIR_ERR_NO_NETWORK,
+-                       _("no network with matching name '%s'"),
+-                       iface->data.network.name);
+-        goto error;
+-    }
+     netdef = virNetworkObjGetDef(obj);
+ 
+     if (!virNetworkObjIsActive(obj)) {
+@@ -4795,7 +4797,8 @@ networkAllocateActualDevice(virDomainDefPtr dom,
+  * No return value (but does log any failures)
+  */
+ static void
+-networkNotifyActualDevice(virDomainDefPtr dom,
++networkNotifyActualDevice(virNetworkPtr net,
++                          virDomainDefPtr dom,
+                           virDomainNetDefPtr iface)
+ {
+     virNetworkDriverStatePtr driver = networkGetDriver();
+@@ -4806,19 +4809,20 @@ networkNotifyActualDevice(virDomainDefPtr dom,
+     size_t i;
+     char *master = NULL;
+ 
++    obj = virNetworkObjFindByName(driver->networks, net->name);
++    if (!obj) {
++        virReportError(VIR_ERR_NO_NETWORK,
++                       _("no network with matching name '%s'"),
++                       net->name);
++        goto error;
++    }
++
+     if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK) {
+         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                        _("Expected an interface for a virtual network"));
+         goto error;
+     }
+ 
+-    obj = virNetworkObjFindByName(driver->networks, iface->data.network.name);
+-    if (!obj) {
+-        virReportError(VIR_ERR_NO_NETWORK,
+-                       _("no network with matching name '%s'"),
+-                       iface->data.network.name);
+-        goto error;
+-    }
+     netdef = virNetworkObjGetDef(obj);
+ 
+     if (!virNetworkObjIsActive(obj)) {
+@@ -5031,7 +5035,8 @@ networkNotifyActualDevice(virDomainDefPtr dom,
+  * Returns 0 on success, -1 on failure.
+  */
+ static int
+-networkReleaseActualDevice(virDomainDefPtr dom,
++networkReleaseActualDevice(virNetworkPtr net,
++                           virDomainDefPtr dom,
+                            virDomainNetDefPtr iface)
+ {
+     virNetworkDriverStatePtr driver = networkGetDriver();
+@@ -5042,19 +5047,20 @@ networkReleaseActualDevice(virDomainDefPtr dom,
+     size_t i;
+     int ret = -1;
+ 
++    obj = virNetworkObjFindByName(driver->networks, net->name);
++    if (!obj) {
++        virReportError(VIR_ERR_NO_NETWORK,
++                       _("no network with matching name '%s'"),
++                       net->name);
++        goto error;
++    }
++
+     if (iface->type != VIR_DOMAIN_NET_TYPE_NETWORK) {
+         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                        _("Expected an interface for a virtual network"));
+         goto error;
+     }
+ 
+-    obj = virNetworkObjFindByName(driver->networks, iface->data.network.name);
+-    if (!obj) {
+-        virReportError(VIR_ERR_NO_NETWORK,
+-                       _("no network with matching name '%s'"),
+-                       iface->data.network.name);
+-        goto error;
+-    }
+     netdef = virNetworkObjGetDef(obj);
+ 
+     switch ((virNetworkForwardType) netdef->forward.type) {
+diff --git a/src/qemu/qemu_hotplug.c b/src/qemu/qemu_hotplug.c
+index 48489d3cdc..7275bc1938 100644
+--- a/src/qemu/qemu_hotplug.c
++++ b/src/qemu/qemu_hotplug.c
+@@ -1376,6 +1376,7 @@ qemuDomainAttachNetDevice(virQEMUDriverPtr driver,
+     bool charDevPlugged = false;
+     bool netdevPlugged = false;
+     char *netdev_name;
++    virConnectPtr conn = NULL;
+ 
+     /* preallocate new slot for device */
+     if (VIR_REALLOC_N(vm->def->nets, vm->def->nnets + 1) < 0)
+@@ -1385,9 +1386,12 @@ qemuDomainAttachNetDevice(virQEMUDriverPtr driver,
+      * network's pool of devices, or resolve bridge device name
+      * to the one defined in the network definition.
+      */
+-    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
+-        virDomainNetAllocateActualDevice(vm->def, net) < 0)
+-        goto cleanup;
++    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++        if (!(conn = virGetConnectNetwork()))
++            goto cleanup;
++        if (virDomainNetAllocateActualDevice(conn, vm->def, net) < 0)
++            goto cleanup;
++    }
+ 
+     actualType = virDomainNetGetActualType(net);
+ 
+@@ -1690,8 +1694,12 @@ qemuDomainAttachNetDevice(virQEMUDriverPtr driver,
+ 
+         virDomainNetRemoveHostdev(vm->def, net);
+ 
+-        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-            virDomainNetReleaseActualDevice(vm->def, net);
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++            if (conn)
++                virDomainNetReleaseActualDevice(conn, vm->def, net);
++            else
++                VIR_WARN("Unable to release network device '%s'", NULLSTR(net->ifname));
++        }
+     }
+ 
+     VIR_FREE(nicstr);
+@@ -1711,6 +1719,7 @@ qemuDomainAttachNetDevice(virQEMUDriverPtr driver,
+     VIR_FREE(vhostfd);
+     VIR_FREE(vhostfdName);
+     VIR_FREE(charDevAlias);
++    virObjectUnref(conn);
+     virDomainCCWAddressSetFree(ccwaddrs);
+ 
+     return ret;
+@@ -3740,6 +3749,7 @@ qemuDomainChangeNet(virQEMUDriverPtr driver,
+     bool needVlanUpdate = false;
+     int ret = -1;
+     int changeidx = -1;
++    virConnectPtr conn = NULL;
+ 
+     if ((changeidx = virDomainNetFindIdx(vm->def, newdev)) < 0)
+         goto cleanup;
+@@ -3915,9 +3925,11 @@ qemuDomainChangeNet(virQEMUDriverPtr driver,
+     /* allocate new actual device to compare to old - we will need to
+      * free it if we fail for any reason
+      */
+-    if (newdev->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
+-        virDomainNetAllocateActualDevice(vm->def, newdev) < 0) {
+-        goto cleanup;
++    if (newdev->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++        if (!(conn = virGetConnectNetwork()))
++            goto cleanup;
++        if (virDomainNetAllocateActualDevice(conn, vm->def, newdev) < 0)
++            goto cleanup;
+     }
+ 
+     newType = virDomainNetGetActualType(newdev);
+@@ -4128,8 +4140,12 @@ qemuDomainChangeNet(virQEMUDriverPtr driver,
+ 
+         /* this function doesn't work with HOSTDEV networks yet, thus
+          * no need to change the pointer in the hostdev structure */
+-        if (olddev->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-            virDomainNetReleaseActualDevice(vm->def, olddev);
++        if (olddev->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++            if (conn || (conn = virGetConnectNetwork()))
++                virDomainNetReleaseActualDevice(conn, vm->def, olddev);
++            else
++                VIR_WARN("Unable to release network device '%s'", NULLSTR(olddev->ifname));
++        }
+         virDomainNetDefFree(olddev);
+         /* move newdev into the nets list, and NULL it out from the
+          * virDomainDeviceDef that we were given so that the caller
+@@ -4160,8 +4176,9 @@ qemuDomainChangeNet(virQEMUDriverPtr driver,
+      * that the changes were minor enough that we didn't need to
+      * replace the entire device object.
+      */
+-    if (newdev && newdev->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-        virDomainNetReleaseActualDevice(vm->def, newdev);
++    if (newdev && newdev->type == VIR_DOMAIN_NET_TYPE_NETWORK && conn)
++        virDomainNetReleaseActualDevice(conn, vm->def, newdev);
++    virObjectUnref(conn);
+ 
+     return ret;
+ }
+@@ -4753,8 +4770,15 @@ qemuDomainRemoveHostDevice(virQEMUDriverPtr driver,
+     virDomainHostdevDefFree(hostdev);
+ 
+     if (net) {
+-        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-            virDomainNetReleaseActualDevice(vm->def, net);
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++            virConnectPtr conn = virGetConnectNetwork();
++            if (conn) {
++                virDomainNetReleaseActualDevice(conn, vm->def, net);
++                virObjectUnref(conn);
++            } else {
++                VIR_WARN("Unable to release network device '%s'", NULLSTR(net->ifname));
++            }
++        }
+         virDomainNetDefFree(net);
+     }
+ 
+@@ -4856,8 +4880,15 @@ qemuDomainRemoveNetDevice(virQEMUDriverPtr driver,
+ 
+     qemuDomainNetDeviceVportRemove(net);
+ 
+-    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-        virDomainNetReleaseActualDevice(vm->def, net);
++    if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++        virConnectPtr conn = virGetConnectNetwork();
++        if (conn) {
++            virDomainNetReleaseActualDevice(conn, vm->def, net);
++            virObjectUnref(conn);
++        } else {
++            VIR_WARN("Unable to release network device '%s'", NULLSTR(net->ifname));
++        }
++    }
+     virDomainNetDefFree(net);
+     ret = 0;
+ 
+diff --git a/src/qemu/qemu_process.c b/src/qemu/qemu_process.c
+index 8b0ae901e9..71d4b39302 100644
+--- a/src/qemu/qemu_process.c
++++ b/src/qemu/qemu_process.c
+@@ -3277,6 +3277,7 @@ static void
+ qemuProcessNotifyNets(virDomainDefPtr def)
+ {
+     size_t i;
++    virConnectPtr conn = NULL;
+ 
+     for (i = 0; i < def->nnets; i++) {
+         virDomainNetDefPtr net = def->nets[i];
+@@ -3288,9 +3289,14 @@ qemuProcessNotifyNets(virDomainDefPtr def)
+         if (virDomainNetGetActualType(net) == VIR_DOMAIN_NET_TYPE_DIRECT)
+            ignore_value(virNetDevMacVLanReserveName(net->ifname, false));
+ 
+-        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-            virDomainNetNotifyActualDevice(def, net);
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++            if (!conn && !(conn = virGetConnectNetwork()))
++                continue;
++            virDomainNetNotifyActualDevice(conn, def, net);
++        }
+     }
++
++    virObjectUnref(conn);
+ }
+ 
+ /* Attempt to instantiate the filters. Ignore failures because it's
+@@ -5466,6 +5472,7 @@ qemuProcessNetworkPrepareDevices(virDomainDefPtr def)
+ {
+     int ret = -1;
+     size_t i;
++    virConnectPtr conn = NULL;
+ 
+     for (i = 0; i < def->nnets; i++) {
+         virDomainNetDefPtr net = def->nets[i];
+@@ -5475,9 +5482,12 @@ qemuProcessNetworkPrepareDevices(virDomainDefPtr def)
+          * network's pool of devices, or resolve bridge device name
+          * to the one defined in the network definition.
+          */
+-        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK &&
+-            virDomainNetAllocateActualDevice(def, net) < 0)
+-            goto cleanup;
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++            if (!conn && !(conn = virGetConnectNetwork()))
++                goto cleanup;
++            if (virDomainNetAllocateActualDevice(conn, def, net) < 0)
++                goto cleanup;
++        }
+ 
+         actualType = virDomainNetGetActualType(net);
+         if (actualType == VIR_DOMAIN_NET_TYPE_HOSTDEV &&
+@@ -5508,6 +5518,7 @@ qemuProcessNetworkPrepareDevices(virDomainDefPtr def)
+     }
+     ret = 0;
+  cleanup:
++    virObjectUnref(conn);
+     return ret;
+ }
+ 
+@@ -7123,6 +7134,7 @@ void qemuProcessStop(virQEMUDriverPtr driver,
+     size_t i;
+     char *timestamp;
+     virQEMUDriverConfigPtr cfg = virQEMUDriverGetConfig(driver);
++    virConnectPtr conn = NULL;
+ 
+     VIR_DEBUG("Shutting down vm=%p name=%s id=%d pid=%lld, "
+               "reason=%s, asyncJob=%s, flags=0x%x",
+@@ -7323,8 +7335,12 @@ void qemuProcessStop(virQEMUDriverPtr driver,
+ 
+         /* kick the device out of the hostdev list too */
+         virDomainNetRemoveHostdev(def, net);
+-        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK)
+-            virDomainNetReleaseActualDevice(vm->def, net);
++        if (net->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++            if (conn || (conn = virGetConnectNetwork()))
++                virDomainNetReleaseActualDevice(conn, vm->def, net);
++            else
++                VIR_WARN("Unable to release network device '%s'", NULLSTR(net->ifname));
++        }
+     }
+ 
+  retry:
+@@ -7427,6 +7443,7 @@ void qemuProcessStop(virQEMUDriverPtr driver,
+         virSetError(orig_err);
+         virFreeError(orig_err);
+     }
++    virObjectUnref(conn);
+     virObjectUnref(cfg);
+ }
+ 
+-- 
+2.18.1
+
+From 43c402aa1604e25ea611b7eeb70d295633b8ed73 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20P=2E=20Berrang=C3=A9?= <berrange@redhat.com>
+Date: Tue, 2 Apr 2019 18:18:40 +0100
+Subject: [PATCH 3/7] network: drop back compat code loading actual bridge name
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The actual network def was updated to save the bridge name back
+in 1.2.11:
+
+  commit a3609121799d44898a3e0d0bf92b755e55e7b418
+  Author: Laine Stump <laine@laine.org>
+  Date:   Fri Nov 21 12:20:37 2014 -0500
+
+    network: save bridge name in ActualNetDef when actualType==network too
+
+The chance that someone is running libvirt < 1.2.11 and wants
+todo a live upgrade to 5.3.0 without a host reboot is essentially
+zero. We can thus reasonably drop the back compat code now.
+
+Reviewed-by: Laine Stump <laine@laine.org>
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+---
+ src/network/bridge_driver.c | 11 -----------
+ 1 file changed, 11 deletions(-)
+
+diff --git a/src/network/bridge_driver.c b/src/network/bridge_driver.c
+index bcc2bb5b3e..a10013d6a1 100644
+--- a/src/network/bridge_driver.c
++++ b/src/network/bridge_driver.c
+@@ -4832,17 +4832,6 @@ networkNotifyActualDevice(virNetworkPtr net,
+         goto error;
+     }
+ 
+-    /* if we're restarting libvirtd after an upgrade from a version
+-     * that didn't save bridge name in actualNetDef for
+-     * actualType==network, we need to copy it in so that it will be
+-     * available in all cases
+-     */
+-    if (actualType == VIR_DOMAIN_NET_TYPE_NETWORK &&
+-        !iface->data.network.actual->data.bridge.brname &&
+-        (VIR_STRDUP(iface->data.network.actual->data.bridge.brname,
+-                    netdef->bridge) < 0))
+-            goto error;
+-
+     /* see if we're connected to the correct bridge */
+     if (netdef->bridge) {
+         bool useOVS = false;
+-- 
+2.18.1
+
+From bbe2aa627f621e6749af374b22856184d1f351dc Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20P=2E=20Berrang=C3=A9?= <berrange@redhat.com>
+Date: Thu, 26 Jul 2018 17:24:30 +0100
+Subject: [PATCH 4/7] conf: simplify link from hostdev back to network device
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+hostdevs have a link back to the original network device. This is fairly
+generic accepting any type of device, however, we don't intend to make
+use of this approach in future. It can thus be specialized to network
+devices.
+
+Reviewed-by: Cole Robinson <crobinso@redhat.com>
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+---
+ src/conf/domain_conf.c         | 22 ++++++++++------------
+ src/conf/domain_conf.h         |  8 +++++++-
+ src/libxl/libxl_driver.c       |  4 ++--
+ src/network/bridge_driver.c    |  3 +--
+ src/qemu/qemu_command.c        |  3 +--
+ src/qemu/qemu_domain_address.c |  4 ++--
+ src/qemu/qemu_hotplug.c        |  6 ++----
+ src/util/virhostdev.c          | 17 ++++++++---------
+ 8 files changed, 33 insertions(+), 34 deletions(-)
+
+diff --git a/src/conf/domain_conf.c b/src/conf/domain_conf.c
+index 025cc4a994..1ec6455d14 100644
+--- a/src/conf/domain_conf.c
++++ b/src/conf/domain_conf.c
+@@ -2848,10 +2848,10 @@ void virDomainHostdevDefClear(virDomainHostdevDefPtr def)
+      * such resource is the virDomainDeviceInfo.
+      */
+ 
+-    /* If there is a parent device object, it will handle freeing
++    /* If there is a parentnet device object, it will handle freeing
+      * def->info.
+      */
+-    if (def->parent.type == VIR_DOMAIN_DEVICE_NONE)
++    if (!def->parentnet)
+         virDomainDeviceInfoFree(def->info);
+ 
+     switch (def->mode) {
+@@ -2919,10 +2919,10 @@ void virDomainHostdevDefFree(virDomainHostdevDefPtr def)
+     /* free all subordinate objects */
+     virDomainHostdevDefClear(def);
+ 
+-    /* If there is a parent device object, it will handle freeing
++    /* If there is a parentnet device object, it will handle freeing
+      * the memory.
+      */
+-    if (def->parent.type == VIR_DOMAIN_DEVICE_NONE)
++    if (!def->parentnet)
+         VIR_FREE(def);
+ }
+ 
+@@ -5490,7 +5490,7 @@ virDomainDefCollectBootOrder(virDomainDefPtr def ATTRIBUTE_UNUSED,
+         return 0;
+ 
+     if (dev->type == VIR_DOMAIN_DEVICE_HOSTDEV &&
+-        dev->data.hostdev->parent.type != VIR_DOMAIN_DEVICE_NONE) {
++        dev->data.hostdev->parentnet) {
+         /* This hostdev is a child of a higher level device
+          * (e.g. interface), and thus already being counted on the
+          * list for the other device type.
+@@ -6340,7 +6340,7 @@ virDomainDeviceDefValidateAliasesIterator(virDomainDefPtr def,
+         return 0;
+ 
+     if (dev->type == VIR_DOMAIN_DEVICE_HOSTDEV &&
+-        dev->data.hostdev->parent.type == VIR_DOMAIN_DEVICE_NET) {
++        dev->data.hostdev->parentnet) {
+         /* This hostdev is a copy of some previous interface.
+          * Aliases are duplicated. */
+         return 0;
+@@ -11156,8 +11156,7 @@ virDomainActualNetDefParseXML(xmlNodePtr node,
+     } else if (actual->type == VIR_DOMAIN_NET_TYPE_HOSTDEV) {
+         virDomainHostdevDefPtr hostdev = &actual->data.hostdev.def;
+ 
+-        hostdev->parent.type = VIR_DOMAIN_DEVICE_NET;
+-        hostdev->parent.data.net = parent;
++        hostdev->parentnet = parent;
+         hostdev->info = &parent->info;
+         /* The helper function expects type to already be found and
+          * passed in as a string, since it is in a different place in
+@@ -11809,8 +11808,7 @@ virDomainNetDefParseXML(virDomainXMLOptionPtr xmlopt,
+ 
+     case VIR_DOMAIN_NET_TYPE_HOSTDEV:
+         hostdev = &def->data.hostdev.def;
+-        hostdev->parent.type = VIR_DOMAIN_DEVICE_NET;
+-        hostdev->parent.data.net = def;
++        hostdev->parentnet = def;
+         hostdev->info = &def->info;
+         /* The helper function expects type to already be found and
+          * passed in as a string, since it is in a different place in
+@@ -28509,11 +28507,11 @@ virDomainDefFormatInternal(virDomainDefPtr def,
+     }
+ 
+     for (n = 0; n < def->nhostdevs; n++) {
+-        /* If parent.type != NONE, this is just a pointer to the
++        /* If parentnet != NONE, this is just a pointer to the
+          * hostdev in a higher-level device (e.g. virDomainNetDef),
+          * and will have already been formatted there.
+          */
+-        if (def->hostdevs[n]->parent.type == VIR_DOMAIN_DEVICE_NONE &&
++        if (!def->hostdevs[n]->parentnet &&
+             virDomainHostdevDefFormat(buf, def->hostdevs[n], flags) < 0) {
+             goto error;
+         }
+diff --git a/src/conf/domain_conf.h b/src/conf/domain_conf.h
+index 8ef6d507b8..c1bdf42c10 100644
+--- a/src/conf/domain_conf.h
++++ b/src/conf/domain_conf.h
+@@ -331,7 +331,13 @@ struct _virDomainHostdevCaps {
+ 
+ /* basic device for direct passthrough */
+ struct _virDomainHostdevDef {
+-    virDomainDeviceDef parent; /* higher level Def containing this */
++    /* If 'parentnet' is non-NULL it means this host dev was
++     * not originally present in the XML. It was copied from
++     * a network interface for convenience when handling
++     * hostdevs internally. This hostdev should never be
++     * visible to the user except as part of the interface
++     */
++    virDomainNetDefPtr parentnet;
+ 
+     int mode; /* enum virDomainHostdevMode */
+     int startupPolicy; /* enum virDomainStartupPolicy */
+diff --git a/src/libxl/libxl_driver.c b/src/libxl/libxl_driver.c
+index 506dcdfbeb..42221cb925 100644
+--- a/src/libxl/libxl_driver.c
++++ b/src/libxl/libxl_driver.c
+@@ -3915,9 +3915,9 @@ libxlDomainDetachDeviceLive(libxlDriverPrivatePtr driver,
+             /* If this is a network hostdev, we need to use the higher-level
+              * detach function so that mac address / virtualport are reset
+              */
+-            if (hostdev->parent.type == VIR_DOMAIN_DEVICE_NET)
++            if (hostdev->parentnet)
+                 ret = libxlDomainDetachNetDevice(driver, vm,
+-                                                 hostdev->parent.data.net);
++                                                 hostdev->parentnet);
+             else
+                 ret = libxlDomainDetachHostDevice(driver, vm, hostdev);
+             break;
+diff --git a/src/network/bridge_driver.c b/src/network/bridge_driver.c
+index a10013d6a1..eb9a00f5cf 100644
+--- a/src/network/bridge_driver.c
++++ b/src/network/bridge_driver.c
+@@ -4509,8 +4509,7 @@ networkAllocateActualDevice(virNetworkPtr net,
+                            netdef->name);
+             goto error;
+         }
+-        iface->data.network.actual->data.hostdev.def.parent.type = VIR_DOMAIN_DEVICE_NET;
+-        iface->data.network.actual->data.hostdev.def.parent.data.net = iface;
++        iface->data.network.actual->data.hostdev.def.parentnet = iface;
+         iface->data.network.actual->data.hostdev.def.info = &iface->info;
+         iface->data.network.actual->data.hostdev.def.mode = VIR_DOMAIN_HOSTDEV_MODE_SUBSYS;
+         iface->data.network.actual->data.hostdev.def.managed = netdef->forward.managed ? 1 : 0;
+diff --git a/src/qemu/qemu_command.c b/src/qemu/qemu_command.c
+index 2acc0b56ea..df60a3653b 100644
+--- a/src/qemu/qemu_command.c
++++ b/src/qemu/qemu_command.c
+@@ -5739,8 +5739,7 @@ qemuBuildHostdevCommandLine(virCommandPtr cmd,
+             /* bootNet will be non-0 if boot order was set and no other
+              * net devices were encountered
+              */
+-            if (hostdev->parent.type == VIR_DOMAIN_DEVICE_NET &&
+-                bootIndex == 0) {
++            if (hostdev->parentnet && bootIndex == 0) {
+                 bootIndex = *bootHostdevNet;
+                 *bootHostdevNet = 0;
+             }
+diff --git a/src/qemu/qemu_domain_address.c b/src/qemu/qemu_domain_address.c
+index 2ec21e65ac..e28f8394a7 100644
+--- a/src/qemu/qemu_domain_address.c
++++ b/src/qemu/qemu_domain_address.c
+@@ -1503,7 +1503,7 @@ qemuDomainCollectPCIAddress(virDomainDefPtr def ATTRIBUTE_UNUSED,
+ 
+     if (!virDeviceInfoPCIAddressIsPresent(info) ||
+         ((device->type == VIR_DOMAIN_DEVICE_HOSTDEV) &&
+-         (device->data.hostdev->parent.type != VIR_DOMAIN_DEVICE_NONE))) {
++         device->data.hostdev->parentnet)) {
+         /* If a hostdev has a parent, its info will be a part of the
+          * parent, and will have its address collected during the scan
+          * of the parent's device type.
+@@ -1598,7 +1598,7 @@ qemuDomainCollectPCIAddressExtension(virDomainDefPtr def ATTRIBUTE_UNUSED,
+ 
+     if (!virDeviceInfoPCIAddressExtensionIsPresent(info) ||
+         ((device->type == VIR_DOMAIN_DEVICE_HOSTDEV) &&
+-         (device->data.hostdev->parent.type != VIR_DOMAIN_DEVICE_NONE))) {
++         device->data.hostdev->parentnet)) {
+         /* If a hostdev has a parent, its info will be a part of the
+          * parent, and will have its address collected during the scan
+          * of the parent's device type.
+diff --git a/src/qemu/qemu_hotplug.c b/src/qemu/qemu_hotplug.c
+index 7275bc1938..228ce2a76f 100644
+--- a/src/qemu/qemu_hotplug.c
++++ b/src/qemu/qemu_hotplug.c
+@@ -4713,11 +4713,9 @@ qemuDomainRemoveHostDevice(virQEMUDriverPtr driver,
+             goto cleanup;
+     }
+ 
+-    if (hostdev->parent.type == VIR_DOMAIN_DEVICE_NET) {
+-        net = hostdev->parent.data.net;
+-
++    if (hostdev->parentnet) {
+         for (i = 0; i < vm->def->nnets; i++) {
+-            if (vm->def->nets[i] == net) {
++            if (vm->def->nets[i] == hostdev->parentnet) {
+                 virDomainNetRemove(vm->def, i);
+                 break;
+             }
+diff --git a/src/util/virhostdev.c b/src/util/virhostdev.c
+index 6be395cdda..19ae001971 100644
+--- a/src/util/virhostdev.c
++++ b/src/util/virhostdev.c
+@@ -333,8 +333,7 @@ virHostdevIsPCINetDevice(virDomainHostdevDefPtr hostdev)
+ {
+     return hostdev->mode == VIR_DOMAIN_HOSTDEV_MODE_SUBSYS &&
+         hostdev->source.subsys.type == VIR_DOMAIN_HOSTDEV_SUBSYS_TYPE_PCI &&
+-        hostdev->parent.type == VIR_DOMAIN_DEVICE_NET &&
+-        hostdev->parent.data.net;
++        hostdev->parentnet != NULL;
+ }
+ 
+ 
+@@ -427,7 +426,7 @@ virHostdevSaveNetConfig(virDomainHostdevDefPtr hostdev,
+     int vf = -1;
+ 
+     if (!virHostdevIsPCINetDevice(hostdev) ||
+-        virDomainNetGetActualVirtPortProfile(hostdev->parent.data.net))
++        virDomainNetGetActualVirtPortProfile(hostdev->parentnet))
+        return 0;
+ 
+     if (virHostdevIsVirtualFunction(hostdev) != 1) {
+@@ -474,8 +473,8 @@ virHostdevSetNetConfig(virDomainHostdevDefPtr hostdev,
+     if (virHostdevNetDevice(hostdev, -1, &linkdev, &vf) < 0)
+         return -1;
+ 
+-    vlan = virDomainNetGetActualVlan(hostdev->parent.data.net);
+-    virtPort = virDomainNetGetActualVirtPortProfile(hostdev->parent.data.net);
++    vlan = virDomainNetGetActualVlan(hostdev->parentnet);
++    virtPort = virDomainNetGetActualVirtPortProfile(hostdev->parentnet);
+     if (virtPort) {
+         if (vlan) {
+             virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
+@@ -485,11 +484,11 @@ virHostdevSetNetConfig(virDomainHostdevDefPtr hostdev,
+             return -1;
+         }
+         if (virHostdevNetConfigVirtPortProfile(linkdev, vf, virtPort,
+-                                               &hostdev->parent.data.net->mac,
++                                               &hostdev->parentnet->mac,
+                                                uuid, port_profile_associate) < 0)
+             return -1;
+     } else {
+-        if (virNetDevSetNetConfig(linkdev, vf, &hostdev->parent.data.net->mac,
++        if (virNetDevSetNetConfig(linkdev, vf, &hostdev->parentnet->mac,
+                                   vlan, NULL, true) < 0)
+             return -1;
+     }
+@@ -535,10 +534,10 @@ virHostdevRestoreNetConfig(virDomainHostdevDefPtr hostdev,
+     if (virHostdevNetDevice(hostdev, 0, &linkdev, &vf) < 0)
+         return -1;
+ 
+-    virtPort = virDomainNetGetActualVirtPortProfile(hostdev->parent.data.net);
++    virtPort = virDomainNetGetActualVirtPortProfile(hostdev->parentnet);
+     if (virtPort) {
+         return virHostdevNetConfigVirtPortProfile(linkdev, vf, virtPort,
+-                                                  &hostdev->parent.data.net->mac,
++                                                  &hostdev->parentnet->mac,
+                                                   NULL,
+                                                   port_profile_associate);
+     } else {
+-- 
+2.18.1
+
+From 42a92ee93d5432ebd9ebfd409903b5287fc7d7ff Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20P=2E=20Berrang=C3=A9?= <berrange@redhat.com>
+Date: Tue, 20 Nov 2018 11:30:05 +0000
+Subject: [PATCH 5/7] network: add missing bandwidth limits for bridge forward
+ type
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+In the case of a network with forward=bridge, which has a bridge device
+listed, we are capable of setting bandwidth limits but fail to call the
+function to register them.
+
+Reviewed-by: Cole Robinson <crobinso@redhat.com>
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+---
+ src/conf/domain_conf.c      | 10 +++++-----
+ src/network/bridge_driver.c | 39 ++++++++++++++++++++++++++-----------
+ 2 files changed, 33 insertions(+), 16 deletions(-)
+
+diff --git a/src/conf/domain_conf.c b/src/conf/domain_conf.c
+index 1ec6455d14..a7ad8a2bf0 100644
+--- a/src/conf/domain_conf.c
++++ b/src/conf/domain_conf.c
+@@ -11172,8 +11172,10 @@ virDomainActualNetDefParseXML(xmlNodePtr node,
+                                               hostdev, flags) < 0) {
+             goto error;
+         }
+-    } else if (actual->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
++    } else if (actual->type == VIR_DOMAIN_NET_TYPE_BRIDGE ||
++               actual->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
+         VIR_AUTOFREE(char *) class_id = NULL;
++        xmlNodePtr sourceNode;
+ 
+         class_id = virXPathString("string(./class/@id)", ctxt);
+         if (class_id &&
+@@ -11183,10 +11185,8 @@ virDomainActualNetDefParseXML(xmlNodePtr node,
+                            class_id);
+             goto error;
+         }
+-    }
+-    if (actual->type == VIR_DOMAIN_NET_TYPE_BRIDGE ||
+-        actual->type == VIR_DOMAIN_NET_TYPE_NETWORK) {
+-        xmlNodePtr sourceNode = virXPathNode("./source", ctxt);
++
++        sourceNode = virXPathNode("./source", ctxt);
+         if (sourceNode) {
+             char *brname = virXMLPropString(sourceNode, "bridge");
+ 
+diff --git a/src/network/bridge_driver.c b/src/network/bridge_driver.c
+index eb9a00f5cf..379b7dcef9 100644
+--- a/src/network/bridge_driver.c
++++ b/src/network/bridge_driver.c
+@@ -3249,7 +3249,7 @@ networkValidate(virNetworkDriverStatePtr driver,
+     virPortGroupDefPtr defaultPortGroup = NULL;
+     virNetworkIPDefPtr ipdef;
+     bool ipv4def = false, ipv6def = false;
+-    bool bandwidthAllowed = true;
++    bool bandwidthAllowed = false;
+     bool usesInterface = false, usesAddress = false;
+ 
+     if (virXMLCheckIllegalChars("name", def->name, "\n") < 0)
+@@ -3270,9 +3270,15 @@ networkValidate(virNetworkDriverStatePtr driver,
+             return -1;
+ 
+         virNetworkSetBridgeMacAddr(def);
++        bandwidthAllowed = true;
+         break;
+ 
+     case VIR_NETWORK_FORWARD_BRIDGE:
++        if (def->bridge != NULL)
++            bandwidthAllowed = true;
++
++        ATTRIBUTE_FALLTHROUGH;
++
+     case VIR_NETWORK_FORWARD_PRIVATE:
+     case VIR_NETWORK_FORWARD_VEPA:
+     case VIR_NETWORK_FORWARD_PASSTHROUGH:
+@@ -3313,15 +3319,6 @@ networkValidate(virNetworkDriverStatePtr driver,
+                            virNetworkForwardTypeToString(def->forward.type));
+             return -1;
+         }
+-        if (def->bandwidth) {
+-            virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
+-                           _("Unsupported network-wide <bandwidth> element "
+-                             "in network %s with forward mode='%s'"),
+-                           def->name,
+-                           virNetworkForwardTypeToString(def->forward.type));
+-            return -1;
+-        }
+-        bandwidthAllowed = false;
+         break;
+ 
+     case VIR_NETWORK_FORWARD_LAST:
+@@ -3330,6 +3327,16 @@ networkValidate(virNetworkDriverStatePtr driver,
+         return -1;
+     }
+ 
++    if (def->bandwidth &&
++        !bandwidthAllowed) {
++        virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
++                       _("Unsupported network-wide <bandwidth> element "
++                         "in network %s with forward mode='%s'"),
++                       def->name,
++                       virNetworkForwardTypeToString(def->forward.type));
++        return -1;
++    }
++
+     /* we support configs with a single PF defined:
+      *   <pf dev='eth0'/>
+      * or with a list of netdev names:
+@@ -4598,6 +4605,9 @@ networkAllocateActualDevice(virNetworkPtr net,
+                     goto error;
+                 }
+             }
++
++            if (networkPlugBandwidth(obj, iface) < 0)
++                goto error;
+             break;
+         }
+ 
+@@ -5061,6 +5071,11 @@ networkReleaseActualDevice(virNetworkPtr net,
+         break;
+ 
+     case VIR_NETWORK_FORWARD_BRIDGE:
++        if (iface->data.network.actual &&
++            actualType == VIR_DOMAIN_NET_TYPE_BRIDGE &&
++            networkUnplugBandwidth(obj, iface) < 0)
++            goto error;
++        break;
+     case VIR_NETWORK_FORWARD_PRIVATE:
+     case VIR_NETWORK_FORWARD_VEPA:
+     case VIR_NETWORK_FORWARD_PASSTHROUGH:
+@@ -5469,7 +5484,9 @@ networkBandwidthGenericChecks(virDomainNetDefPtr iface,
+     virNetDevBandwidthPtr ifaceBand;
+     unsigned long long old_floor, new_floor;
+ 
+-    if (virDomainNetGetActualType(iface) != VIR_DOMAIN_NET_TYPE_NETWORK) {
++    if (virDomainNetGetActualType(iface) != VIR_DOMAIN_NET_TYPE_NETWORK &&
++        (virDomainNetGetActualType(iface) != VIR_DOMAIN_NET_TYPE_BRIDGE ||
++         iface->data.network.actual->data.bridge.brname == NULL)) {
+         /* This is not an interface that's plugged into a network.
+          * We don't care. Thus from our POV bandwidth change is allowed. */
+         return false;
+-- 
+2.18.1
+
+From de938b92c9d3a47647164aa643c20d2fc96cd2bc Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20P=2E=20Berrang=C3=A9?= <berrange@redhat.com>
+Date: Fri, 1 Feb 2019 12:39:25 +0000
+Subject: [PATCH 6/7] util: add helper method for re-attaching a tap device to
+ a bridge
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Reviewed-by: Cole Robinson <crobinso@redhat.com>
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+---
+ src/libvirt_private.syms |  1 +
+ src/util/virnetdevtap.c  | 67 ++++++++++++++++++++++++++++++++++++++++
+ src/util/virnetdevtap.h  | 12 +++++++
+ 3 files changed, 80 insertions(+)
+
+diff --git a/src/libvirt_private.syms b/src/libvirt_private.syms
+index b2be2d0fb9..a7817e8b35 100644
+--- a/src/libvirt_private.syms
++++ b/src/libvirt_private.syms
+@@ -2486,6 +2486,7 @@ virNetDevTapDelete;
+ virNetDevTapGetName;
+ virNetDevTapGetRealDeviceName;
+ virNetDevTapInterfaceStats;
++virNetDevTapReattachBridge;
+ 
+ 
+ # util/virnetdevveth.h
+diff --git a/src/util/virnetdevtap.c b/src/util/virnetdevtap.c
+index 972f3405aa..b65c26bee1 100644
+--- a/src/util/virnetdevtap.c
++++ b/src/util/virnetdevtap.c
+@@ -553,6 +553,73 @@ virNetDevTapAttachBridge(const char *tapname,
+ }
+ 
+ 
++/**
++ * virNetDevTapReattachBridge:
++ * @tapname: the tap interface name (or name template)
++ * @brname: the bridge name
++ * @macaddr: desired MAC address
++ * @virtPortProfile: bridge/port specific configuration
++ * @virtVlan: vlan tag info
++ * @mtu: requested MTU for port (or 0 for "default")
++ * @actualMTU: MTU actually set for port (after accounting for bridge's MTU)
++ *
++ * Ensures that the tap device (@tapname) is connected to the bridge
++ * (@brname), potentially removing it from any existing bridge that
++ * does not match.
++ *
++ * Returns 0 in case of success or -1 on failure
++ */
++int
++virNetDevTapReattachBridge(const char *tapname,
++                           const char *brname,
++                           const virMacAddr *macaddr,
++                           const unsigned char *vmuuid,
++                           virNetDevVPortProfilePtr virtPortProfile,
++                           virNetDevVlanPtr virtVlan,
++                           unsigned int mtu,
++                           unsigned int *actualMTU)
++{
++    bool useOVS = false;
++    VIR_AUTOFREE(char *) master = NULL;
++
++    if (virNetDevGetMaster(tapname, &master) < 0)
++        return -1;
++
++    /* IFLA_MASTER for a tap on an OVS switch is always "ovs-system" */
++    if (STREQ_NULLABLE(master, "ovs-system")) {
++        useOVS = true;
++        if (virNetDevOpenvswitchInterfaceGetMaster(tapname, &master) < 0)
++            return -1;
++    }
++
++    /* Nothing more todo if we're on the right bridge already */
++    if (STREQ_NULLABLE(brname, master))
++        return 0;
++
++    /* disconnect from current (incorrect) bridge, if any  */
++    if (master) {
++        int ret;
++        VIR_INFO("Removing %s from %s", tapname, master);
++        if (useOVS)
++            ret = virNetDevOpenvswitchRemovePort(master, tapname);
++        else
++            ret = virNetDevBridgeRemovePort(master, tapname);
++        if (ret < 0)
++            return -1;
++    }
++
++    VIR_INFO("Attaching %s to %s", tapname, brname);
++    if (virNetDevTapAttachBridge(tapname, brname,
++                                 macaddr, vmuuid,
++                                 virtPortProfile,
++                                 virtVlan,
++                                 mtu, actualMTU) < 0)
++        return -1;
++
++    return 0;
++}
++
++
+ /**
+  * virNetDevTapCreateInBridgePort:
+  * @brname: the bridge name
+diff --git a/src/util/virnetdevtap.h b/src/util/virnetdevtap.h
+index 226122aa2c..2b3893cd37 100644
+--- a/src/util/virnetdevtap.h
++++ b/src/util/virnetdevtap.h
+@@ -71,6 +71,18 @@ virNetDevTapAttachBridge(const char *tapname,
+     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) ATTRIBUTE_NONNULL(3)
+     ATTRIBUTE_RETURN_CHECK;
+ 
++int
++virNetDevTapReattachBridge(const char *tapname,
++                           const char *brname,
++                           const virMacAddr *macaddr,
++                           const unsigned char *vmuuid,
++                           virNetDevVPortProfilePtr virtPortProfile,
++                           virNetDevVlanPtr virtVlan,
++                           unsigned int mtu,
++                           unsigned int *actualMTU)
++    ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) ATTRIBUTE_NONNULL(3)
++    ATTRIBUTE_RETURN_CHECK;
++
+ int virNetDevTapCreateInBridgePort(const char *brname,
+                                    char **ifname,
+                                    const virMacAddr *macaddr,
+-- 
+2.18.1
+
+From 3e213d43b1c7c72aa021abc7ab26d4fa80bd88ee Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20P=2E=20Berrang=C3=A9?= <berrange@redhat.com>
+Date: Fri, 1 Feb 2019 13:46:33 +0000
+Subject: [PATCH 7/7] network: use virNetDevTapReattachBridge API
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Switch over to use the new API for re-attaching the bridge device
+
+Reviewed-by: Cole Robinson <crobinso@redhat.com>
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+---
+ src/network/bridge_driver.c | 47 ++++++++-----------------------------
+ 1 file changed, 10 insertions(+), 37 deletions(-)
+
+diff --git a/src/network/bridge_driver.c b/src/network/bridge_driver.c
+index 379b7dcef9..f824b8b4f3 100644
+--- a/src/network/bridge_driver.c
++++ b/src/network/bridge_driver.c
+@@ -4816,7 +4816,6 @@ networkNotifyActualDevice(virNetworkPtr net,
+     virNetworkDefPtr netdef;
+     virNetworkForwardIfDefPtr dev = NULL;
+     size_t i;
+-    char *master = NULL;
+ 
+     obj = virNetworkObjFindByName(driver->networks, net->name);
+     if (!obj) {
+@@ -4843,42 +4842,17 @@ networkNotifyActualDevice(virNetworkPtr net,
+ 
+     /* see if we're connected to the correct bridge */
+     if (netdef->bridge) {
+-        bool useOVS = false;
+-
+-        if (virNetDevGetMaster(iface->ifname, &master) < 0)
++        /*
++         * NB: we can't notify the guest of any MTU change anyway,
++         * so there is no point in trying to learn the actualMTU
++         * (final arg to virNetDevTapReattachBridge())
++         */
++        if (virNetDevTapReattachBridge(iface->ifname, netdef->bridge,
++                                       &iface->mac, dom->uuid,
++                                       virDomainNetGetActualVirtPortProfile(iface),
++                                       virDomainNetGetActualVlan(iface),
++                                       iface->mtu, NULL) < 0) {
+             goto error;
+-
+-        /* IFLA_MASTER for a tap on an OVS switch is always "ovs-system" */
+-        if (STREQ_NULLABLE(master, "ovs-system")) {
+-            useOVS = true;
+-            VIR_FREE(master);
+-            if (virNetDevOpenvswitchInterfaceGetMaster(iface->ifname, &master) < 0)
+-                goto error;
+-        }
+-
+-        if (STRNEQ_NULLABLE(netdef->bridge, master)) {
+-            /* disconnect from current (incorrect) bridge */
+-            if (master) {
+-                VIR_INFO("Removing %s from %s", iface->ifname, master);
+-                if (useOVS)
+-                    ignore_value(virNetDevOpenvswitchRemovePort(master, iface->ifname));
+-                else
+-                    ignore_value(virNetDevBridgeRemovePort(master, iface->ifname));
+-            }
+-
+-            /* attach/reattach to correct bridge.
+-             * NB: we can't notify the guest of any MTU change anyway,
+-             * so there is no point in trying to learn the actualMTU
+-             * (final arg to virNetDevTapAttachBridge())
+-             */
+-            VIR_INFO("Attaching %s to %s", iface->ifname, netdef->bridge);
+-            if (virNetDevTapAttachBridge(iface->ifname, netdef->bridge,
+-                                         &iface->mac, dom->uuid,
+-                                         virDomainNetGetActualVirtPortProfile(iface),
+-                                         virDomainNetGetActualVlan(iface),
+-                                         iface->mtu, NULL) < 0) {
+-                goto error;
+-            }
+         }
+     }
+ 
+@@ -5013,7 +4987,6 @@ networkNotifyActualDevice(virNetworkPtr net,
+ 
+  cleanup:
+     virNetworkObjEndAPI(&obj);
+-    VIR_FREE(master);
+     return;
+ 
+  error:
+-- 
+2.18.1
+
