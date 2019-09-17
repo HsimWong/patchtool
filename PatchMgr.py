@@ -1,12 +1,10 @@
 import re
+import Fake
 
-# modific: a dictionary
-# {""}
-
-# Filechange:
 '''
 fc = {
-    "ori_dir":str, "new_dir":str, "modifs":{modif}
+    "ori_dir":str, "new_dir":str,
+    "modifs":{modif}, "head_str":str
 }
 modif = {
     "ori_start": int, "ori_offset": int,
@@ -19,141 +17,123 @@ line = {
 }
 '''
 
-def make_modi(modi_git):
-    # print(modi_git)
-    raw_lines = modi_git.split('\n')
-    # print(lines[0])
-    # print(lines[1])
-    # print(lines[2])
-    
-    int_raw = re.findall('[0-9]*', raw_lines[0])
-    ori_start = int(int_raw[1])
-    ori_offst = int(int_raw[3])
-    new_start = int(int_raw[6])
-    new_offst = int(int_raw[8])
-    # print(ori_start, ori_offst, new_start, new_offst)
-    lines = []
-    cur_off_old = 0
-    cur_off_new = 0
-    for raw_line in raw_lines[1:]:
-        # print(line)
-        if len(raw_line) == 0:
-            continue 
-        if raw_line[0] == '+':
-            cur_off_new += 1 
-                         
-        elif raw_line[0] == '-':
-            cur_off_old += 1
-        elif raw_line[0] == ' ':
-            cur_off_new += 1
-            cur_off_old += 1
-        apd = {"ori_line_num":ori_start + cur_off_old,
-         "new_line_num":new_start + cur_off_new,
-         "type":"addition", "content":raw_line}
-        lines.append(apd)
-        print(apd)
-    
-    return {
-        "ori_start":ori_start, "ori_offset":ori_offst,
-        "new_start":new_start, "new_offset":new_offst,
-        "func_name":raw_lines[0][raw_lines[0].find("@@")+3:],
-        "lines":lines
-    }
-
-def make_file(file_git):
-    ori_dir_span = re.search(r"\-\-\- ", file_git).span()
-    new_dir_span = re.search(r'\+\+\+ ', file_git).span()
-    ori_dir = file_git[ori_dir_span[1]:new_dir_span[0]][:-1]
-
-    new_dir = file_git[new_dir_span[1]:]
-    new_dir = new_dir[0:new_dir.find("@@")][:-1]
-    file_body = file_git[file_git.find("@@")+3:]
-    modi_gits = file_body.split("\n@@ ")
-    # print((modi_gits[0]))
-    modifs = []
-    for modi in modi_gits:
-        # print("_________________________________")
-        # print(modi)
-        modifs.append(make_modi(modi))
-    return {"ori_dir":ori_dir, "new_dir":new_dir, "modifs":modifs}
-    
-        
-
-
-
 
 class PatchMgr(object):
     def __init__(self, git_body):
         self.git_body = git_body
         self.file_changes = []
+        self.parse()
 
     def parse(self):
-        file_git_array = re.split(r'\ndiff --git ', self.git_body)
+        file_git_array = re.split(r'diff --git ', self.git_body)
+        # print(len(file_git_array))
         for file_git in file_git_array:
-            self.file_changes.append(make_file(file_git))
+            if len(file_git) < 10:
+                continue
+            self.file_changes.append(self.make_file(file_git))
+        # print(self.file_changes)
+
+    def make_modi(self, modi_git):
+        # print(modi_git)
+        raw_lines = modi_git.split('\n')
+        # print(raw_lines[0])
+        # print(lines[1])
+        # print(lines[2])
+
+        int_raw = re.findall('[0-9]*', raw_lines[0])
+        # print(raw_lines[0])
+        # print(int_raw)
+        # print(sum([int(x) for x in int_raw]))
+        # if int_raw[1] == "":
+        #     ori_start = int(int_raw[1])
+        #     ori_offst = int(int_raw[3])
+        #     new_start = int(int_raw[6])
+        #     new_offst = int(int_raw[8])
+        # else:  
+        ori_start = int(int_raw[1])
+        ori_offst = int(int_raw[3])
+        new_start = int(int_raw[6])
+        new_offst = int(int_raw[8])
+
+        # print(ori_start, ori_offst, new_start, new_offst)
+        lines = []
+        cur_off_old = 0
+        cur_off_new = 0
+        for raw_line in raw_lines[1:]:
+            # print(line)
+            typ = ""
+            if len(raw_line) == 0:
+                continue
+            if raw_line[0] == '+':
+                cur_off_new += 1
+                typ = "addition"
+            elif raw_line[0] == '-':
+                cur_off_old += 1
+                typ = "deletion"
+            elif raw_line[0] == ' ':
+                cur_off_new += 1
+                cur_off_old += 1
+                typ = "unmodified"
+            else:
+                continue
+            apd = {"ori_line_num": ori_start + cur_off_old,
+                   "new_line_num": new_start + cur_off_new,
+                   "type": typ, "content": raw_line}
+            lines.append(apd)
+            # print(apd)
+        # print("yes")
+
+        return {
+            "ori_start": ori_start, "ori_offset": ori_offst,
+            "new_start": new_start, "new_offset": new_offst,
+            "func_name": raw_lines[0][raw_lines[0].find("@@") + 3:],
+            "lines": lines
+        }
+
+    def make_file(self, file_git):
+        file_head = ""
+        split_lines = file_git.split('\n')
+        for line in file_git.split('\n')[0:4]:
+            file_head += line + '\n'
+        # print(split_lines[0])
+
+        ori_dir = split_lines[0][2:split_lines[0].find(" b/")]
+        # print(ori_dir)
+        new_dir = split_lines[0][split_lines[0].find(" b/") + 3:]
+
+        file_body = file_git[file_git.find("@@") + 3:]
+
+        modi_gits = file_body.split("\n@@ ")
+        # print(len(modi_gits))
+        # print((modi_gits[0]))
+        modifs = []
+        if not (len(split_lines) < 5):
+            # print(split_lines[5])
+            # print(modi_gits)
+            try:
+                for modi in modi_gits:
+                    # print(modi)
+                    # print("_________________________________")
+                    # print(modi)
+                    # if len(modi.split('\n')) <= 4:
+                    #     break
+                    modifs.append(self.make_modi(modi))
+            except ValueError:
+                pass
+
+        return {"ori_dir": ori_dir, "new_dir": new_dir,
+                "modifs": modifs, "head_str": file_head}
+
 
 if __name__ == "__main__":
-    file_git = '''a/src/util/virhostdev.c b/src/util/virhostdev.c
-index 6be395cdda..19ae001971 100644
---- a/src/util/virhostdev.c
-+++ b/src/util/virhostdev.c
-@@ -333,8 +333,7 @@ virHostdevIsPCINetDevice(virDomainHostdevDefPtr hostdev)
- {
-     return hostdev->mode == VIR_DOMAIN_HOSTDEV_MODE_SUBSYS &&
-         hostdev->source.subsys.type == VIR_DOMAIN_HOSTDEV_SUBSYS_TYPE_PCI &&
--        hostdev->parent.type == VIR_DOMAIN_DEVICE_NET &&
--        hostdev->parent.data.net;
-+        hostdev->parentnet != NULL;
- }
- 
- 
-@@ -427,7 +426,7 @@ virHostdevSaveNetConfig(virDomainHostdevDefPtr hostdev,
-     int vf = -1;
- 
-     if (!virHostdevIsPCINetDevice(hostdev) ||
--        virDomainNetGetActualVirtPortProfile(hostdev->parent.data.net))
-+        virDomainNetGetActualVirtPortProfile(hostdev->parentnet))
-        return 0;
- 
-     if (virHostdevIsVirtualFunction(hostdev) != 1) {
-@@ -474,8 +473,8 @@ virHostdevSetNetConfig(virDomainHostdevDefPtr hostdev,
-     if (virHostdevNetDevice(hostdev, -1, &linkdev, &vf) < 0)
-         return -1;
- 
--    vlan = virDomainNetGetActualVlan(hostdev->parent.data.net);
--    virtPort = virDomainNetGetActualVirtPortProfile(hostdev->parent.data.net);
-+    vlan = virDomainNetGetActualVlan(hostdev->parentnet);
-+    virtPort = virDomainNetGetActualVirtPortProfile(hostdev->parentnet);
-     if (virtPort) {
-         if (vlan) {
-             virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
-@@ -485,11 +484,11 @@ virHostdevSetNetConfig(virDomainHostdevDefPtr hostdev,
-             return -1;
-         }
-         if (virHostdevNetConfigVirtPortProfile(linkdev, vf, virtPort,
--                                               &hostdev->parent.data.net->mac,
-+                                               &hostdev->parentnet->mac,
-                                                uuid, port_profile_associate) < 0)
-             return -1;
-     } else {
--        if (virNetDevSetNetConfig(linkdev, vf, &hostdev->parent.data.net->mac,
-+        if (virNetDevSetNetConfig(linkdev, vf, &hostdev->parentnet->mac,
-                                   vlan, NULL, true) < 0)
-             return -1;
-     }
-@@ -535,10 +534,10 @@ virHostdevRestoreNetConfig(virDomainHostdevDefPtr hostdev,
-     if (virHostdevNetDevice(hostdev, 0, &linkdev, &vf) < 0)
-         return -1;
- 
--    virtPort = virDomainNetGetActualVirtPortProfile(hostdev->parent.data.net);
-+    virtPort = virDomainNetGetActualVirtPortProfile(hostdev->parentnet);
-     if (virtPort) {
-         return virHostdevNetConfigVirtPortProfile(linkdev, vf, virtPort,
--                                                  &hostdev->parent.data.net->mac,
-+                                                  &hostdev->parentnet->mac,
-                                                   NULL,
-                                                   port_profile_associate);
-     } else {
-'''
-    (make_file(file_git))
-        
+    file_git = ""
+    add_git = ""
+    with open("./sample_new.txt") as f:
+        add_git = f.read()
+    with open("./sample_bug.txt") as f:
+        file_git = f.read()
+
+    a = PatchMgr(file_git)
+    b = PatchMgr(add_git)
+    out_str = (Fake.getFakeInfo(a, b))
+    print(out_str)

@@ -1,1 +1,0 @@
-/usr/bin/c++  -g   CMakeFiles/patchtool.dir/basic_structs.cpp.o CMakeFiles/patchtool.dir/BugMod.cpp.o CMakeFiles/patchtool.dir/Parser.cpp.o  -o patchtool 

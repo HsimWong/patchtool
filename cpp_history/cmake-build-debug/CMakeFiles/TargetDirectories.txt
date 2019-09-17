@@ -1,3 +1,0 @@
-/home/ryan/Desktop/patchtool/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/ryan/Desktop/patchtool/cmake-build-debug/CMakeFiles/patchtool.dir
-/home/ryan/Desktop/patchtool/cmake-build-debug/CMakeFiles/edit_cache.dir
