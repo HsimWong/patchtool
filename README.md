@@ -3,7 +3,7 @@
 
 Here I will simply list the packages on which the tool is implemented. It should be working fine with similar environment
 
-**OS**: RHEL
+**OS**: RHEL-8.1.0
 
 **Interpreter**: 3.6.8
 
@@ -25,7 +25,7 @@ optional arguments:
 ```
 An ordinary usage goes like this:
 ```
-python3 main.py -d [directory] -p [patchfile]
+python3 main.py -d [git_directory] -p [patchfile]
 ```
 
 ## Requirements for input patch file
