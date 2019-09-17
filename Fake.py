@@ -18,7 +18,7 @@ def getFakeInfo(PatchMgrOri, PatchMgrNow):
     fake_body = ""
     # print()
     for bug_file in PatchMgrOri.file_changes:
-        fake_body += bug_file['head_str'] + '\n'
+        fake_body += "diff --git " + bug_file['head_str'] + '\n'
         for now_file in PatchMgrNow.file_changes:
             if not bug_file['new_dir'][1:] == now_file['new_dir'][1:]:
                 continue
@@ -47,7 +47,7 @@ def getFakeInfo(PatchMgrOri, PatchMgrNow):
                     # )
                     for line in displ_modif['lines']:
                         fake_body += line['content'] + '\n'
-    return fake_body
+    return '\n' + fake_body
 # import os
 # import PatchMgr
 # def getFakeInfo(patchMgrOri, bug_commit_hash, repo_dir):
