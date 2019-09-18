@@ -32,10 +32,8 @@ if __name__ == '__main__':
         if len(raw_patch) == 0:
             break 
         file_count += 1
-        patch_head_ind = re.search(" [0-9]* file(s)? changed, [0-9]"
-                                    + r"* (insertions\(\+\)|deletions\(\-\))"
-                                    + r"(, [0-9]* deletions\(\-\))?"
-                                    , raw_patch).span()[1]
+        patch_head_ind = re.search(" [0-9]* file(s)? changed, [0-9]* (insertions\(\+\)|deletions\(\-\))"+\
+                "(, [0-9]* deletions\(\-\))?\n?( [a-z]{1,} mode [0-9]* [0-9,A-Z,a-z,\/,\.,\-]*\n)*", raw_patch).span()[1]
         patch_head = raw_patch[:patch_head_ind]
         patch_body = raw_patch[patch_head_ind+2:]
         patch_hash = patch_head[5:20]
@@ -48,7 +46,7 @@ if __name__ == '__main__':
         # print("Generated bug patch mgr")
         mgr_now = PatchMgr.PatchMgr(git_info_now)
         # print("Generated now patch mgr")
-        out_str = patch_head + Fake.getFakeInfo(mgr_bug, mgr_now)
+        out_str = patch_head + '\nd' + Fake.getFakeInfo(mgr_bug, mgr_now)[12:]
         
         print(out_str)
 
