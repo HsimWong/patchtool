@@ -13,6 +13,9 @@ Here I will simply list the packages on which the tool is implemented. It should
 
 **Kernel**: 4.18.0-128.el8.x86_64
 
+## Installation
+No need to install, just ```git clone``` the repository and enjoy your using:)
+
 ## How to use
 ```
 usage: main.py [-h] -d D -p P
@@ -25,7 +28,7 @@ optional arguments:
 ```
 An ordinary usage goes like this:
 ```
-python3 main.py -d [git_directory] -p [patchfile]
+python3 main.py -d [git_directory] -p [patchfile_path]
 ```
 
 ## Requirements for input patch file
