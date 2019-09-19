@@ -14,7 +14,8 @@ Here I will simply list the packages on which the tool is implemented. It should
 **Kernel**: 4.18.0-128.el8.x86_64
 
 ## Installation
-No need to install, just ```git clone``` the repository and enjoy your using:)
+No need to install, just ```git clone``` the repository, or download the latest release and enjoy your using:)
+Either method is ok, for our latest release is always synchronized from the master branch.
 
 ## How to use
 ```
