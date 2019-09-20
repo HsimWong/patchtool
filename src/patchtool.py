@@ -4,7 +4,7 @@ import argparse
 import os
 import re
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', type=str, required=True,
                         help='The directory where this patch tool is hoped to be used')
