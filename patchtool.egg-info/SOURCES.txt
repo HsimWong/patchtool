@@ -1,7 +1,0 @@
-README.md
-setup.py
-patchtool.egg-info/PKG-INFO
-patchtool.egg-info/SOURCES.txt
-patchtool.egg-info/dependency_links.txt
-patchtool.egg-info/entry_points.txt
-patchtool.egg-info/top_level.txt
