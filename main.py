@@ -33,4 +33,4 @@ def main():
         mgr_now = PatchMgr.PatchMgr(git_info_now)
         out_str = patch_head + '\nd' + Fake.getFakeInfo(mgr_bug, mgr_now)[12:]
         print(out_str)
-
+main()
