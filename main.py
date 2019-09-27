@@ -14,9 +14,6 @@ def main():
     pat_dir = str(args.p)
     git_repo = str(args.d)
     old_patch_str = ""
-    with open(str(pat_dir), "r") as f:
-         old_patch_str = f.read()
-    old_patch_str = ""
     with open(str(pat_dir), 'r') as f:
         old_patch_str = f.read()
 
