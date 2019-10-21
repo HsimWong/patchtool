@@ -29,7 +29,7 @@ def getFakeInfo(PatchMgrOri, PatchMgrNow):
                                 + "," + str(displ_modif['ori_offset'])\
                                 + " +" + str(displ_modif['new_start'])\
                                 + "," + str(displ_modif['new_offset'])\
-                                + " @@ " + str(displ_modif['func_name'])
+                                + " @@ " + str(displ_modif['func_name']) + '\n'
                     for line in displ_modif['lines']:
                         fake_body += line['content'] + '\n'
     return '\n' + fake_body

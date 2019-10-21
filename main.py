@@ -5,14 +5,18 @@ import os
 import re
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-d', type=str, required=True,
-                        help='The directory where this patch tool is hoped to be used')
-    parser.add_argument('-p', type=str, required=True,
-                        help="Directory of the patch file")
-    args = parser.parse_args()
-    pat_dir = str(args.p)
-    git_repo = str(args.d)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('-d', type=str, required=True,
+    #                     help='The directory where this patch tool is hoped to be used')
+    # parser.add_argument('-p', type=str, required=True,
+    #                     help="Directory of the patch file")
+    # args = parser.parse_args()
+    # pat_dir = str(args.p)
+    # git_repo = str(args.d)
+
+    git_repo = '/home/cov/libvirt-rhel'
+    pat_dir = '/home/cov/libvirt-rhel/0001-qemu-Pass-qemuCaps-to-qemuDomainDefFormatBufInternal.patch'
+    
     old_patch_str = ""
     with open(str(pat_dir), 'r') as f:
         old_patch_str = f.read()
