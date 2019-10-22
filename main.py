@@ -19,8 +19,8 @@ def main():
     '''
     pat_dir = str(args.p)
     git_repo = str(args.d)
-    pat_dir = pat_dir if not pat_dir[0] == '/' else curr_dir + pat_dir
-    git_repo = git_repo if not git_repo[0] == '/' else curr_dir + git_repo
+    pat_dir = pat_dir if pat_dir[0] == '/' else curr_dir[:-2] + '/' + pat_dir
+    git_repo = git_repo if git_repo[0] == '/' else curr_dir[:-2] + '/' + git_repo
     old_patch_str = ""
     with open(str(pat_dir), 'r') as f:
         old_patch_str = f.read()
