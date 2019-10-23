@@ -30,6 +30,8 @@ class PatchMgr(object):
             self.file_changes.append(self.make_file(file_git))
 
     def make_modi(self, modi_git):
+        if len(modi_git) == 0:
+            return modi_git
         raw_lines = modi_git.split('\n')
         int_raw = re.findall('[0-9]*', raw_lines[0])
         ori_start = int(int_raw[1])

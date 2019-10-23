@@ -11,15 +11,23 @@ def getFakeNum(num, now_file):
                     continue
     return (num + off_set)
 
+"""fc = {"ori_dir":str, "new_dir":str, "modifs":{modif}, "head_str":str}"""
+
+
 def getFakeInfo(PatchMgrOri, PatchMgrNow):
     fake_body = ""
     for bug_file in PatchMgrOri.file_changes:
         fake_body += "diff --git " + bug_file['head_str'] + '\n'
+        if len(PatchMgrNow.file_changes) == 0:
+            print("YES")
+            PatchMgrNow.file_changes.append({"ori_dir":bug_file['ori_dir'], \
+                    "modifs":[],"new_dir":bug_file['new_dir']})
         for now_file in PatchMgrNow.file_changes:
             if not bug_file['new_dir'][1:] == now_file['new_dir'][1:]:
                 continue
             else:
                 for modif in bug_file['modifs']:
+                    
                     displ_modif = {"ori_start": None, "ori_offset": modif['ori_offset'], 
                                    "new_start": None, "new_offset": modif['new_offset'], 
                                    "func_name": modif['func_name'],"lines": modif['lines']}
