@@ -30,7 +30,10 @@ def main():
         if len(raw_patch) == 0:
             break 
         file_count += 1
-        patch_head_ind = re.search(" [0-9]* file(s)? changed, [0-9]* (insertion(s)?\(\+\)|deletion(s)?\(\-\))(, [0-9]* deletion(s)?\(\-\))?\n(( create\s[\s\S]*\n\n)*)?", raw_patch).span()[1]
+        patch_head_ind = re.search(" [0-9]* file(s)? changed, [0-9]* " + \
+                                   "(insertion(s)?\(\+\)|deletion(s)?\(\-\))" + \
+                                   "(, [0-9]* deletion(s)?\(\-\))?\n" + \
+                                   "(( create\s[\s\S]*\n\n)*)?", raw_patch).span()[1]
         patch_head = raw_patch[:patch_head_ind]
         patch_body = raw_patch[patch_head_ind+2:]
         patch_hash = patch_head[5:20]
