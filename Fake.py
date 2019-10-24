@@ -19,7 +19,7 @@ def getFakeInfo(PatchMgrOri, PatchMgrNow):
     for bug_file in PatchMgrOri.file_changes:
         fake_body += "diff --git " + bug_file['head_str'] + '\n'
         if len(PatchMgrNow.file_changes) == 0:
-            print("YES")
+            
             PatchMgrNow.file_changes.append({"ori_dir":bug_file['ori_dir'], \
                     "modifs":[],"new_dir":bug_file['new_dir']})
         for now_file in PatchMgrNow.file_changes:
