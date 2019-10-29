@@ -4,6 +4,7 @@ import argparse
 import os
 import re
 import sys
+import test
 
 def main():
     parser = argparse.ArgumentParser()
@@ -19,6 +20,7 @@ def main():
     '''
     pat_dir = str(args.p)
     git_repo = str(args.d)
+    log_dir = pat_dir + '.log'
     pat_dir = pat_dir if pat_dir[0] == '/' else curr_dir[:-2] + '/' + pat_dir
     git_repo = git_repo if git_repo[0] == '/' else curr_dir[:-2] + '/' + git_repo
     old_patch_str = ""
@@ -26,6 +28,9 @@ def main():
         old_patch_str = f.read()
     patches_array = re.split(r"-- \n[0-9,\.]*\n*", old_patch_str)
     file_count = 0
+    fv = open("verification_info.log", 'w+')
+    usable_patches = ""
+    unveri_patches = ""
     for raw_patch in patches_array:
         if len(raw_patch) == 0:
             break 
@@ -53,6 +58,23 @@ def main():
             else:
                 git_info_now += '\n' + git_info 
         mgr_now = PatchMgr.PatchMgr(git_info_now)
-        out_str = patch_head + '\nd' + Fake.getFakeInfo(mgr_bug, mgr_now)[12:]
-        print(out_str)
+        new_info = '\nd' + Fake.getFakeInfo(mgr_bug, mgr_now)[12:]
+        out_str = patch_head + new_info
+        test_info, test_status = test.testify(git_repo, new_info, patch_hash)
+        #print(test_info)
+        if len(test_info) == 0:
+            test_info = "The patch generated for commit %s is correct. \n" % patch_hash
+        fv.write(test_info)
+        print(test_info, end = "")
+        if test_status:
+            usable_patches += out_str
+        else:
+            unveri_patches += out_str
+    with open('verified.patch', 'w+') as f:
+        f.write(usable_patches)
+    with open('unverified.patch', 'w+') as f:
+        f.write(unveri_patches)
+        
+    fv.close()
+
 main()
