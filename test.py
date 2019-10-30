@@ -1,9 +1,5 @@
 import PatchMgr
 
-           
-
-
-
 def testify(git_repo, out_str, commit_hash):
     status = True
     file_mgr = PatchMgr.PatchMgr(out_str).file_changes[0]

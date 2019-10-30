@@ -12,6 +12,8 @@ def main():
                         help='The directory where this patch tool is hoped to be used')
     parser.add_argument('-p', type=str, required=True,
                         help="Directory of the patch file")
+    parser.add_argument('-s', type=str, required=False,
+                        help="The style you would like the updated file to be output" )           
     args = parser.parse_args()
     curr_dir = os.popen("pwd").read() + '/'
     '''
@@ -20,6 +22,11 @@ def main():
     '''
     pat_dir = str(args.p)
     git_repo = str(args.d)
+    style = str(args.s)
+
+    if not style in ['verify', "None"]:
+        print("The option should be \'verify\' or dropped")
+        exit()
     log_dir = pat_dir + '.log'
     pat_dir = pat_dir if pat_dir[0] == '/' else curr_dir[:-2] + '/' + pat_dir
     git_repo = git_repo if git_repo[0] == '/' else curr_dir[:-2] + '/' + git_repo
@@ -31,6 +38,7 @@ def main():
     fv = open("verification_info.log", 'w+')
     usable_patches = ""
     unveri_patches = ""
+    all_patches = ""
     for raw_patch in patches_array:
         if len(raw_patch) == 0:
             break 
@@ -49,7 +57,6 @@ def main():
         for fileName in file_name_list:
             cmd = "cd %s && git diff %s %s"%\
                 (git_repo, patch_hash, fileName)
-            # print(cmd)
             git_info = os.popen(cmd).read()
             
             if git_info is None:
@@ -61,20 +68,24 @@ def main():
         new_info = '\nd' + Fake.getFakeInfo(mgr_bug, mgr_now)[12:]
         out_str = patch_head + new_info
         test_info, test_status = test.testify(git_repo, new_info, patch_hash)
-        #print(test_info)
         if len(test_info) == 0:
             test_info = "The patch generated for commit %s is correct. \n" % patch_hash
         fv.write(test_info)
-        print(test_info, end = "")
+        if style == "verify":
+            print(test_info, end = "")
+        all_patches += out_str
         if test_status:
             usable_patches += out_str
         else:
             unveri_patches += out_str
-    with open('verified.patch', 'w+') as f:
-        f.write(usable_patches)
-    with open('unverified.patch', 'w+') as f:
-        f.write(unveri_patches)
-        
+    if style == "verify":
+        with open(pat_dir + '.verified.patch', 'w+') as f:
+            f.write(usable_patches)
+        with open(pat_dir + '.unverified.patch', 'w+') as f:
+            f.write(unveri_patches)
+    else:
+        print(all_patches)
     fv.close()
+    
 
 main()

@@ -3,7 +3,7 @@
 
 Here I will simply list the packages on which the tool is implemented. It should be working fine with similar environment
 
-**OS**: RHEL-8.1.0
+**OS**: Linux
 
 **Interpreter**: 3.6.8
 
@@ -19,17 +19,22 @@ Either method is ok, for our latest release is always synchronized from the mast
 
 ## How to use
 ```
-usage: main.py [-h] -d D -p P
+usage: main.py [-h] -d D -p P [-s]
 
 optional arguments:
   -h, --help  show this help message and exit
   -d D        The directory where this patch tool is hoped to be used
   -p P        Directory of the patch file
+  -s S        The style in which you would like the updated file to be output
 
 ```
+The patchtool provides with two modes where you can choose either to let the tool verify if the code in patch still exists and unmodified or just let it be. To verify the code, add ```-s verify``` after the command, and the output will tell you at the command whether eache commit is verified. As the excecution finishes, two files will be generated with verified and unverified separately in each file.
+
 An ordinary usage goes like this:
 ```
 python3 main.py -d [git_directory] -p [patchfile_path]
+python3 main.py -d [git_directory] -p [patchfile_path] -s verify
+
 ```
 
 ## Requirements for input patch file
