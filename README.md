@@ -28,7 +28,7 @@ optional arguments:
   -s S        The style in which you would like the updated file to be output
 
 ```
-The patchtool provides with two modes where you can choose either to let the tool verify if the code in patch still exists and unmodified or just let it be. To verify the code, add ```-s verify``` after the command, and the output will tell you at the command whether eache commit is verified. As the excecution finishes, two files will be generated with verified and unverified separately in each file.
+The patchtool provides with two modes where you can choose either to let the tool verify if the code in patch still exists and unmodified, or just do not check their validity, and output the line-number-modified patches. To verify the code, add ```-s verify``` after the command, and the output will tell you at the command whether each commit is verified. As the excecution finishes, two files will be generated with verified and unverified separately in each file.
 
 An ordinary usage goes like this:
 ```
