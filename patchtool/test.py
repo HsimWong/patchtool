@@ -1,4 +1,4 @@
-import PatchMgr
+import patchtool.PatchMgr as PatchMgr
 
 def testify(git_repo, out_str, commit_hash):
     status = True

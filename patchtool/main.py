@@ -1,10 +1,10 @@
-import PatchMgr
-import Fake
+import patchtool.PatchMgr as PatchMgr
+import patchtool.Fake as Fake
+import patchtool.test as test
 import argparse
 import os
 import re
 import sys
-import test
 
 def main():
     parser = argparse.ArgumentParser()
@@ -87,5 +87,5 @@ def main():
         print(all_patches)
     fv.close()
     
-
-main()
+if __name__ == "__main__":
+    main()
