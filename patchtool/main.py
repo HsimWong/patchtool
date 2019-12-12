@@ -1,6 +1,6 @@
-import patchtool.PatchMgr
-import patchtool.Fake
-import patchtool.test
+import patchtool.PatchMgr as PatchMgr
+import patchtool.Fake as Fake
+import patchtool.test as test
 import argparse
 import os
 import re

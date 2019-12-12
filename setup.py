@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="patchtool", # Replace with your own username
-    version="1.2.0-0",
+    version="1.2.0-1",
     author="Xin WANG",
     author_email="hsimwong1202@gmail.com",
     description="Converting patches of old version to the ones with current line number",
