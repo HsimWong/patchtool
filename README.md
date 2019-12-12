@@ -14,12 +14,14 @@ Here I will simply list the packages on which the tool is implemented. It should
 **Kernel**: 4.18.0-128.el8.x86_64
 
 ## Installation
-No need to install, just ```git clone``` the repository, or download the latest release and enjoy your using:)
-Either method is ok, for our latest release is always synchronized from the master branch.
+### Install via pip
+```
+pip install patchtool
+```
 
 ## How to use
 ```
-usage: main.py [-h] -d D -p P [-s]
+usage: patchtool [-h] -d D -p P [-s]
 
 optional arguments:
   -h, --help  show this help message and exit
@@ -32,11 +34,11 @@ The patchtool provides with two modes where you can choose either to let the too
 
 An ordinary usage goes like this:
 ```
-python3 main.py -d [git_directory] -p [patchfile_path]
+patchtool -d [git_directory] -p [patchfile_path]
 ```
 Directly output the updated line number to the terminal.
 ```
-python3 main.py -d [git_directory] -p [patchfile_path] -s verify
+patchtool -d [git_directory] -p [patchfile_path] -s verify
 
 ```
 This will generate three files:
